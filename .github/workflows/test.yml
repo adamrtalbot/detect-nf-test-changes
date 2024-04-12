@@ -1,0 +1,40 @@
+name: test
+
+on:
+  push:
+    branches:
+      - dev
+      - main
+  pull_request:
+  release:
+    types: [published]
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: extract test tar
+        run: |
+          mkdir testrepo \
+          && tar -xzvf .github/workflows/test.tar.gz -C testrepo --no-same-owner
+
+      - name: debug
+        run: |
+          ls -lha testrepo/test
+
+      - name: Detect changes after module A update
+        id: detect_module_a
+        uses: ./
+        with:
+          root: testrepo/test
+          head: change_module_a
+          base: main
+
+      - uses: nick-fields/assert-action@v2
+        with:
+          expected: '["subworkflows/a/tests/main.nf.test", "modules/b/tests/main.nf.test", "modules/a/tests/main.nf.test"]'
+          actual: ${{ steps.detect_module_a.outputs.components }}

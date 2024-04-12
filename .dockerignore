@@ -1,3 +1,5 @@
 *
 !Dockerfile
 !entrypoint.py
+!entrypoint.sh
+!requirements.txt
