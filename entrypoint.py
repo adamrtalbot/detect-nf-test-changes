@@ -214,74 +214,108 @@ def detect_files(paths: list[Path], suffix: str) -> list[Path]:
     return result
 
 
-def process_nf_test_files(files: list[Path]) -> list[str]:
-    """
-    Process the files and return lines that begin with 'workflow', 'process', or 'function' and have a single string afterwards.
-
-    Args:
-        files (list): List of files to process.
-
-    Returns:
-        list: List of lines that match the criteria.
-    """
-    result = []
-    for file in files:
-        with open(file, "r") as f:
-            is_pipeline_test = True
-            lines = f.readlines()
-            for line in lines:
-                line = line.strip()
-                if line.startswith(("workflow", "process", "function")):
-                    words = line.split()
-                    if len(words) == 2 and re.match(r'^".*"$', words[1]):
-                        result.append(line)
-                        is_pipeline_test = False
-
-            # If no results included workflow, process or function
-            # Add a dummy result to fill the 'pipeline' category
-            if is_pipeline_test:
-                result.append("pipeline 'PIPELINE'")
-
-    return result
-
-
 def convert_nf_test_files_to_test_types(
-    lines: list[str], types: list[str] = ["function", "process", "workflow", "pipeline"]
-) -> dict[str, list[str]]:
+    files: list[Path],
+    types: list[str] = ["function", "process", "workflow", "pipeline"],
+) -> tuple[dict[str, list[str]], dict[str, list[Path]]]:
     """
-    Generate a dictionary of function, process and workflow lists from the lines.
+    Converts Nextflow test files to test types and returns as two identical dicts, one with test targets and one with the paths
 
     Args:
-        lines (list): List of lines to process.
-        types (list): List of types to include.
+        files (list[Path]): A list of file paths to Nextflow test files.
+        types (list[str], optional): A list of test types to consider. Defaults to ["function", "process", "workflow", "pipeline"].
 
     Returns:
-        dict: Dictionary with function, process and workflow lists.
+        tuple[dict[str, list[str]], dict[str, list[Path]]]: A tuple containing two dictionaries:
+            - result_names: A dictionary mapping test types to a list of test names.
+            - result_files: A dictionary mapping test types to a list of file paths.
+
     """
     # Populate empty dict from types
-    result: dict[str, list[str]] = {key: [] for key in types}
+    result_names: dict[str, list[str]] = {key: [] for key in types}
+    result_files: dict[str, list[Path]] = {key: [] for key in types}
 
+    for file in files:
+        with open(file, "r") as f:
+            testtype, name = find_test_type(f.readlines())
+
+            if testtype in types:
+                result_names[testtype].append(name)
+                result_files[testtype].append(file)
+            # As a safety measure and future proofing update the dict with any missing vals
+            else:
+                result_names.update({testtype: [name]})
+                result_files.update({testtype: [file]})
+
+    return result_names, result_files
+
+
+def find_run_statements(lines: list[str]) -> list[str]:
+    """
+    Find all run statements in a list of lines.
+
+    Args:
+        lines (list): List of lines to scan.
+
+    Returns:
+        list: List of run statements.
+    """
+    result = []
+    for line in lines:
+        if line.strip().startswith("run"):
+            # This parses `run("<tool>")` to `<tool>
+            dependency = (
+                line.strip()
+                .split()[0]
+                .lstrip("run(")
+                .rstrip(")")
+                .strip("\"'")
+                .casefold()
+            )
+            result.append(dependency)
+    return result
+
+
+def find_include_statements(lines: list[str]) -> list[str]:
+    """
+    Find all include statements in a list of lines.
+
+    Args:
+        lines (list): List of lines to scan.
+
+    Returns:
+        list: List of include statements.
+    """
+    result = []
+    for line in lines:
+        if "include {" in line:
+            dependency = line.split()[2].strip("'\"").replace("/", "_").casefold()
+            result.append(dependency)
+    return result
+
+
+def find_test_type(lines: list[str]) -> tuple[str, str]:
+    """
+    Finds the test type keyword and name from a list of lines.
+
+    Args:
+        lines (list[str]): The list of lines to search for the test type.
+
+    Returns:
+        tuple(str, str): A tuple containing the test type keyword and name.
+
+    """
     for line in lines:
         words = line.split()
-        if len(words) == 2 and re.match(r'^".*"$', words[1]):
+        if (
+            line.strip().startswith(("workflow", "process", "function"))
+            and len(words) == 2
+            and re.match(r'^".*"$', words[1]) is not None
+        ):
             keyword = words[0]
             name = words[1].strip("'\"")  # Strip both single and double quotes
-            if keyword in types:
-                result[keyword].append(name)
-        elif "run" in line:
-            run_words = words[0].strip(")").split("(")
-            if len(run_words) == 2 and re.match(r'^".*"$', run_words[1]):
-                keyword = run_words[0]
-                name = run_words[1].strip("'\"")  # Strip both single and double quotes
-                if keyword in types:
-                    result[keyword].append(name)
-        elif "include {" in line and "include" in types:
-            keyword = words[0]
-            name = words[2].strip("'\"")  # Strip both single and double quotes
-            if keyword in types:
-                result[keyword].append(name)
-
-    return result
+            return (keyword, name)
+    return ("pipeline", "PIPELINE")
 
 
 def find_nf_tests_with_changed_dependencies(
@@ -309,12 +343,7 @@ def find_nf_tests_with_changed_dependencies(
             lines = f.readlines()
             # Get all tags from nf-test file
             # Make case insensitive with .casefold()
-            tags_in_nf_test_file = [
-                tag.casefold().replace("/", "_")
-                for tag in convert_nf_test_files_to_test_types(lines, types=["run"])[
-                    "run"
-                ]
-            ]
+            tags_in_nf_test_file = find_run_statements(lines)
             # Check if tag in nf-test file appears in a tag.
             # Use .casefold() to be case insensitive
             if any(
@@ -333,6 +362,7 @@ def find_nf_files_with_changed_dependencies(
     (identified via include { <tool> }) in *.nf files from a list of paths.
 
     Args:
+
         paths (list): List of directories or files to scan.
         tags (list): List of tags identified as having changes.
 
@@ -350,12 +380,7 @@ def find_nf_files_with_changed_dependencies(
             lines = f.readlines()
             # Get all include statements from nf file
             # Make case insensitive with .casefold()
-            includes_in_nf_file = [
-                tag.casefold().replace("/", "_")
-                for tag in convert_nf_test_files_to_test_types(
-                    lines, types=["include"]
-                )["include"]
-            ]
+            includes_in_nf_file = find_include_statements(lines)
             # Check if include in nf file appears in a tag.
             # Use .casefold() to be case insensitive
             if any(
@@ -371,7 +396,7 @@ def find_nf_files_with_changed_dependencies(
     return nf_test_files_for_changed_dependencies
 
 
-def get_target_tests(results: dict[str, list[str]], types: list[str]) -> list[str]:
+def get_target_tests(results: dict[str, list[any]], types: list[str]) -> list[any]:
     """
     Returns a list of target tests based on the given results and types.
 
@@ -441,29 +466,31 @@ if __name__ == "__main__":
             changed_files, include_files
         )
     nf_test_files = detect_files(changed_files, "*.nf.test")
-    lines = process_nf_test_files(nf_test_files)
-    result = convert_nf_test_files_to_test_types(lines)
+    changed_component_names, changed_component_files = (
+        convert_nf_test_files_to_test_types(nf_test_files)
+    )
 
     # Get only relevant results (specified by -t)
-    target_results = get_target_tests(result, args.types)
+    target_tests = get_target_tests(changed_component_names, args.types)
+    target_test_paths = get_target_tests(changed_component_files, args.types)
 
     # Parse nf-test files to identify nf-tests containing "setup" with changed module/subworkflow/workflow
     nf_test_changed_setup = find_nf_tests_with_changed_dependencies(
         [modules_path, subworkflows_path, workflows_path],
-        target_results,
+        target_tests,
     )
 
     # Parse *.nf files to identify nf-files containing include with changed module/subworkflow/workflow
     nf_files_changed_include = find_nf_files_with_changed_dependencies(
         [modules_path, subworkflows_path, workflows_path],
-        target_results,
+        target_tests,
     )
 
     # Get union of all test files
     all_nf_tests = list(
         {
             get_parents(test_path, args.n_parents)
-            for test_path in target_results
+            for test_path in target_test_paths
             + nf_test_changed_setup
             + nf_files_changed_include
         }

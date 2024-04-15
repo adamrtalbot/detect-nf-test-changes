@@ -50,7 +50,7 @@ jobs:
           root: testrepo/test
           head: change_module_a
           base: main
-          types: "function workflow pipeline"
+          types: "function,workflow,pipeline"
 
       - name: Return directory
         id: detect_module_a_directory
