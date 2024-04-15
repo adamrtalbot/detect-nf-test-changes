@@ -34,7 +34,10 @@ jobs:
           head: change_module_a
           base: main
 
-      - uses: nick-fields/assert-action@v2
-        with:
-          expected: '["modules/b/tests/main.nf.test", "modules/a/tests/main.nf.test", "subworkflows/a/tests/main.nf.test"]'
-          actual: ${{ steps.detect_module_a.outputs.components }}
+      - name: check if valid
+        if: ${{ fromJson('["modules/b/tests/main.nf.test", "modules/a/tests/main.nf.test", "subworkflows/a/tests/main.nf.test"]') == fromJSON(steps.detect_module_a.outputs.components) }}
+        run: exit 0
+
+      - name: check if inconsistent
+        if: ${{ fromJson('["modules/b/tests/main.nf.test", "modules/a/tests/main.nf.test", "subworkflows/a/tests/main.nf.test"]') != fromJSON(steps.detect_module_a.outputs.components) }}
+        run: exit 1
