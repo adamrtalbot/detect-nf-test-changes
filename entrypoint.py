@@ -393,6 +393,14 @@ if __name__ == "__main__":
     # Utility stuff
     args = parse_args()
     logging.basicConfig(level=args.log_level)
+    # Quick validation of args.types since we cant do this in argparse
+    if any(
+        _type not in ["function", "process", "workflow", "pipeline"]
+        for _type in args.types
+    ):
+        raise ValueError(
+            "Invalid test type specified. Must be one of 'function', 'process', 'workflow', 'pipeline'."
+        )
 
     root_path = Path(args.path)
     modules_path = Path(root_path, "modules")
@@ -417,7 +425,7 @@ if __name__ == "__main__":
     # Get only relevant results (specified by -t)
     # Unique using a set
     target_results = list(
-        {item for sublist in map(result.get, args.types) for item in sublist}
+        {item for sublist in map(result.get, args.types, []) for item in sublist}
     )
 
     # Parse nf-test files to identify nf-tests containing "setup" with changed module/subworkflow/workflow
@@ -436,7 +444,7 @@ if __name__ == "__main__":
     all_nf_tests = list(
         {
             get_parents(test_path, args.n_parents)
-            for test_path in nf_test_files
+            for test_path in target_results
             + nf_test_changed_setup
             + nf_files_changed_include
         }
