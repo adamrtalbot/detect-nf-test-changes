@@ -82,10 +82,11 @@ def parse_args() -> argparse.Namespace:
         help="Types of tests to include.",
     )
     parser.add_argument(
-        "--returntype",
-        choices=["file", "dir"],
-        default="file",
-        help="Return either the nf-test file or modules/subworkflow directory of the changed files",
+        "-n",
+        "--n_parents",
+        type=int,
+        default=0,
+        help="Number of parents to up to return. 0 for file, 1 for immediate dir, 2 for parent dir, etc.",
     )
     return parser.parse_args()
 
@@ -370,6 +371,23 @@ def find_nf_files_with_changed_dependencies(
     return nf_test_files_for_changed_dependencies
 
 
+def get_parents(path: Path, n: int) -> Path:
+    """
+    Get the parent directory of a path n levels up.
+
+    Args:
+        path (Path): The path to get the parent of.
+        n (int): The number of levels to go up.
+
+    Returns:
+        Path: The parent directory n levels up.
+    """
+    parent = path
+    for _ in range(n):
+        parent = parent.parent
+    return parent
+
+
 if __name__ == "__main__":
 
     # Utility stuff
@@ -414,21 +432,15 @@ if __name__ == "__main__":
         target_results,
     )
 
-    # Combine target nf-test files and nf-test files with changed dependencies
-    if args.returntype == "file":
-        all_nf_tests = [
-            test_path
-            for test_path in set(
-                nf_test_files + nf_test_changed_setup + nf_files_changed_include
-            )
-        ]
-    elif args.returntype == "dir":
-        all_nf_tests = [
-            test_path.parent.parent
-            for test_path in set(
-                nf_test_files + nf_test_changed_setup + nf_files_changed_include
-            )
-        ]
+    # Get union of all test files
+    all_nf_tests = list(
+        {
+            get_parents(test_path, args.n_parents)
+            for test_path in nf_test_files
+            + nf_test_changed_setup
+            + nf_files_changed_include
+        }
+    )
 
     # Remove root from path and stringify
     normalised_nf_tests = [

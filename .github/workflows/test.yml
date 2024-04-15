@@ -41,3 +41,12 @@ jobs:
       - name: check if inconsistent
         if: ${{ fromJson('["modules/b/tests/main.nf.test", "modules/a/tests/main.nf.test", "subworkflows/a/tests/main.nf.test"]') != fromJSON(steps.detect_module_a.outputs.components) }}
         run: exit 1
+
+      - name: Detect changes after module A update
+        id: detect_module_a_directory
+        uses: ./
+        with:
+          root: testrepo/test
+          head: change_module_a
+          base: main
+          n_type: 2

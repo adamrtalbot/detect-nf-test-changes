@@ -22,14 +22,15 @@ inputs:
   include:
     description: 'Path to an include file containing a YAML of key value pairs to include in changed files. I.e., return the current directory if an important file is changed.'
     required: false
-  log_level:
-    description: 'Log level for the action. Default: "info".'
-    required: false
   types:
     description: 'List of Nextflow component types to include in the output. Default: ["function", "process", "workflow", "pipeline"].'
     required: false
-  returntype:
-    description: 'Return either the nf-test file or modules/subworkflow directory of the changed files. Default: "file".'
+  n_parents:
+    description: 'Number of parents of changed files to return. Default is 0, the changed file. 1 to return the parent directory, 2 to return the parent of that directory etc.'
+    required: false
+    default: '0'
+  log_level:
+    description: 'Log level for the action. Default: "info".'
     required: false
 outputs:
   components:
