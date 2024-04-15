@@ -2,7 +2,7 @@
 
 git config --global --add safe.directory '*'
 
-python entrypoint.py \
+python /entrypoint.py \
     ${ROOT:+"-p=$ROOT"} \
     ${HEAD:+"-r=$HEAD"} \
     ${BASE:+"-b=$BASE"} \
