@@ -26,23 +26,33 @@ jobs:
         run: |
           ls -lha testrepo/test
 
-      - name: Detect changes after module A update
-        id: detect_module_a
+      - name: Default
+        id: detect_module_a_default
         uses: ./
         with:
           root: testrepo/test
           head: change_module_a
           base: main
 
-      - name: check if valid
-        if: ${{ fromJson('["modules/b/tests/main.nf.test", "modules/a/tests/main.nf.test", "subworkflows/a/tests/main.nf.test"]') == fromJSON(steps.detect_module_a.outputs.components) }}
-        run: exit 0
+      - name: Ignore changes in module A
+        id: ignore_module_a
+        uses: ./
+        with:
+          root: testrepo/test
+          head: change_module_a
+          base: main
+          ignored: "./modules/modules/a/*"
 
-      - name: check if inconsistent
-        if: ${{ fromJson('["modules/b/tests/main.nf.test", "modules/a/tests/main.nf.test", "subworkflows/a/tests/main.nf.test"]') != fromJSON(steps.detect_module_a.outputs.components) }}
-        run: exit 1
+      - name: Do not return processes
+        id: return_workflows_only
+        uses: ./
+        with:
+          root: testrepo/test
+          head: change_module_a
+          base: main
+          types: "function workflow pipeline"
 
-      - name: Detect changes after module A update
+      - name: Return directory
         id: detect_module_a_directory
         uses: ./
         with:
