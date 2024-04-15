@@ -24,9 +24,9 @@ inputs:
     description: 'Path to an include file containing a YAML of key value pairs to include in changed files. I.e., return the current directory if an important file is changed.'
     required: false
   types:
-    description: 'List of Nextflow component types to include in the output. Default: "function process workflow pipeline".'
+    description: 'List of Nextflow component types to include in the output as a comma separated list. Default: "function,process,workflow,pipeline".'
     required: false
-    default: 'function process workflow pipeline'
+    default: 'function,process,workflow,pipeline'
   n_parents:
     description: 'Number of parents of changed files to return. Default is 0, the changed file. 1 to return the parent directory, 2 to return the parent of that directory etc.'
     required: false

@@ -70,15 +70,15 @@ def parse_args() -> argparse.Namespace:
         "-l",
         "--log-level",
         choices=["DEBUG", "INFO", "WARNING", "ERROR"],
+        type=str,
         default="INFO",
         help="Logging level",
     )
     parser.add_argument(
         "-t",
         "--types",
-        nargs="+",
-        # choices=["function", "process", "workflow", "pipeline"],
-        default=["function", "process", "workflow", "pipeline"],
+        type=str,
+        default="function,process,workflow,pipeline",
         help="Types of tests to include.",
     )
     parser.add_argument(
@@ -371,6 +371,26 @@ def find_nf_files_with_changed_dependencies(
     return nf_test_files_for_changed_dependencies
 
 
+def get_target_tests(results: dict[str, list[str]], types: list[str]) -> list[str]:
+    """
+    Returns a list of target tests based on the given results and types.
+
+    Args:
+        results (dict[str, list[str]]): A dictionary containing test results for different types.
+        types (list[str]): A list of target types.
+
+    Returns:
+        list[str]: A list of target tests.
+
+    """
+    target_results: list[str] = []
+
+    for target in types:
+        target_results = target_results + results.get(target, [])
+
+    return target_results
+
+
 def get_parents(path: Path, n: int) -> Path:
     """
     Get the parent directory of a path n levels up.
@@ -393,13 +413,15 @@ if __name__ == "__main__":
     # Utility stuff
     args = parse_args()
     logging.basicConfig(level=args.log_level)
+    # Argparse handling of nargs is a bit rubbish. So we do it manually here.
+    args.types = args.types.split(",")
     # Quick validation of args.types since we cant do this in argparse
     if any(
         _type not in ["function", "process", "workflow", "pipeline"]
         for _type in args.types
     ):
         raise ValueError(
-            f"Invalid test type specified. Must be one of 'function', 'process', 'workflow', 'pipeline'. Found: ${args.types}"
+            f"Invalid test type specified. Must be one of 'function', 'process', 'workflow', 'pipeline'. Found: {args.types}"
         )
 
     root_path = Path(args.path)
@@ -423,10 +445,7 @@ if __name__ == "__main__":
     result = convert_nf_test_files_to_test_types(lines)
 
     # Get only relevant results (specified by -t)
-    # Unique using a set
-    target_results = list(
-        {item for sublist in map(result.get, args.types, []) for item in sublist}
-    )
+    target_results = get_target_tests(result, args.types)
 
     # Parse nf-test files to identify nf-tests containing "setup" with changed module/subworkflow/workflow
     nf_test_changed_setup = find_nf_tests_with_changed_dependencies(
