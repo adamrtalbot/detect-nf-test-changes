@@ -77,7 +77,7 @@ def parse_args() -> argparse.Namespace:
         "-t",
         "--types",
         nargs="+",
-        choices=["function", "process", "workflow", "pipeline"],
+        # choices=["function", "process", "workflow", "pipeline"],
         default=["function", "process", "workflow", "pipeline"],
         help="Types of tests to include.",
     )

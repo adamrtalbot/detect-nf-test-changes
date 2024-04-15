@@ -19,19 +19,22 @@ inputs:
   ignored:
     description: 'List of files or file substrings to ignore. Default: [".git/*", ".gitpod.yml", ".prettierignore", ".prettierrc.yml", "*.md", "*.png", "modules.json", "pyproject.toml", "tower.yml"]'
     required: false
+    default: '.git/* .gitpod.yml .prettierignore .prettierrc.yml *.md *.png modules.json pyproject.toml tower.yml'
   include:
     description: 'Path to an include file containing a YAML of key value pairs to include in changed files. I.e., return the current directory if an important file is changed.'
     required: false
   types:
-    description: 'List of Nextflow component types to include in the output. Default: ["function", "process", "workflow", "pipeline"].'
+    description: 'List of Nextflow component types to include in the output. Default: "function process workflow pipeline".'
     required: false
+    default: 'function process workflow pipeline'
   n_parents:
     description: 'Number of parents of changed files to return. Default is 0, the changed file. 1 to return the parent directory, 2 to return the parent of that directory etc.'
     required: false
     default: '0'
   log_level:
-    description: 'Log level for the action. Default: "info".'
+    description: 'Log level for the action. Default: "INFO".'
     required: false
+    default: 'INFO'
 outputs:
   components:
     description: 'List of Nextflow components that require testing based on the branch differences.'
