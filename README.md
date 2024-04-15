@@ -2,6 +2,9 @@
 
 Detect changes in a Nextflow repo and so you can fire off the appropriate nf-tests.
 
+> [!WARNING] 
+> This actions is under extremely rapid development. We'll do a release when it's reached some sort of stability. YOU HAVE BEEN WARNED.
+
 ## Overview
 
 This action scans a Nextflow repository for changes between two branches and identifies any available tests that cover those changes. Furthermore, it will find anything that depdends on the changes and identify those files as well.
@@ -168,3 +171,7 @@ jobs:
       matrix:
         path: ["${{ fromJson(needs.nf-test-changes.outputs.changes) }}"]
 ```
+
+## Authors
+
+The Python script was written by @adamrtalbot and @CarsonJM before being translated into a Github Action by @adamrtalbot. @sateeshperi and @mashehu provided feedback, advice and emotional support.
