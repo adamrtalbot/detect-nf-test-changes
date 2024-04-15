@@ -46,4 +46,4 @@ runs:
     INCLUDE: ${{ inputs.include }}
     LOG_LEVEL: ${{ inputs.log_level }}
     TYPES: ${{ inputs.types }}
-    RETURN_TYPE: ${{ inputs.returntype }}
+    N_PARENTS: ${{ inputs.N_PARENTS }}

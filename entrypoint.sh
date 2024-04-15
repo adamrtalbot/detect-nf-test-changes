@@ -10,4 +10,4 @@ python /entrypoint.py \
     ${INCLUDE:+"-i=$INCLUDE"} \
     ${LOG_LEVEL:+"--log-level=$LOG_LEVEL"} \
     ${TYPES:+"-t=$TYPES"} \
-    ${RETURN_TYPE:+"--returntype=$RETURN_TYPE"} \
+    ${N_PARENT:+"--n_parents=$N_PARENTS"} \
