@@ -399,7 +399,7 @@ if __name__ == "__main__":
         for _type in args.types
     ):
         raise ValueError(
-            "Invalid test type specified. Must be one of 'function', 'process', 'workflow', 'pipeline'."
+            f"Invalid test type specified. Must be one of 'function', 'process', 'workflow', 'pipeline'. Found: ${args.types}"
         )
 
     root_path = Path(args.path)
