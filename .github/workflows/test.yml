@@ -36,5 +36,5 @@ jobs:
 
       - uses: nick-fields/assert-action@v2
         with:
-          expected: '["subworkflows/a/tests/main.nf.test", "modules/b/tests/main.nf.test", "modules/a/tests/main.nf.test"]'
+          expected: '["modules/b/tests/main.nf.test", "modules/a/tests/main.nf.test", "subworkflows/a/tests/main.nf.test"]'
           actual: ${{ steps.detect_module_a.outputs.components }}
