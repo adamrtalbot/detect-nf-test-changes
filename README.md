@@ -51,12 +51,12 @@ steps:
   with:
     head: ${{ github.sha }}
     base: ${{ github.base_ref }}
-    types: 'workflow pipeline'
+    types: 'workflow,pipeline'
 ```
 
 ### Returning the directory
 
-You may wish to return the parent directory instead of the exact test file. You can do this by specifying the number of parent directories you wish to return. E.g., use 0 (default) to return the nf-test file. Use 1 to return the parent directory, use 2 to return the parent of that directory (and so on).
+You may wish to return the parent directory instead of the exact test file. You can do this by specifying the number of parent directories you wish to return. E.g., use 0 (default) to return the specific nf-test file. Use `1` to return the parent directory, use `2` to return the parent of that directory (and so on).
 
 ```yaml
 steps:
@@ -70,7 +70,7 @@ steps:
 
 ### Include additional rules
 
-You may want to include an additional rule to match indirect paths. For example, if you modify a Github workflow in `.github/workflows/` you may wish to test all nf-test files. To do this, create an additional 'include' file in yaml format. This should include a set of key-value pairs. If a file specified by a value is matched the key will be returned as an output. For example, the following `include.yaml` will return the tests in the entire repo if `nextflow.config` changes and the tests in the `tests` directory if `main.nf` is modified.
+You may want to include an additional rule to match indirect paths. For example, if you modify a Github workflow in `.github/workflows/` you may wish to test all nf-test files in the root of the directory (`.`). To do this, create an additional 'include' file in YAML format. This should include a set of key-value pairs; if a file specified by a value is matched the key will be returned as an output. For example, the following `include.yaml` will return the tests in the entire repo if `nextflow.config` changes and the tests in the `tests` directory if `main.nf` is modified.
 
 Note: This will still respect the `types` parameter.
 
@@ -90,20 +90,6 @@ steps:
     head: ${{ github.sha }}
     base: ${{ github.base_ref }}
     include: include.yaml
-```
-
-### Directories instead of files
-
-You may require the enclosing directory instead of the files. You can use the input returntype to change this to 'dir'.
-
-```yaml
-steps:
-- uses: actions/checkout@v4
-- uses: adamrtalbot/detect-nf-test
-  with:
-    head: ${{ github.sha }}
-    base: ${{ github.base_ref }}
-    returntype: 'dir'
 ```
 
 ## Outputs
@@ -131,7 +117,7 @@ jobs:
           head: dev
           base: main
 
-      - name: check if valid
+      - name: Write output to STDOUT
         run:
           echo ${{ steps.detect_changes.outputs.components }}
 ```
