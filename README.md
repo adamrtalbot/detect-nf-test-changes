@@ -7,7 +7,7 @@ Detect changes in a Nextflow repo and so you can fire off the appropriate nf-tes
 
 ## Overview
 
-This action scans a Nextflow repository for changes between two branches and identifies any available tests that cover those changes. Furthermore, it will find anything that depdends on the changes and identify those files as well.
+This action scans a Nextflow repository for code changes between two branches and identifies any available tests that cover those changes. Furthermore, it will find anything that depends on the changes and identify those files as well.
 
 ## Example
 
