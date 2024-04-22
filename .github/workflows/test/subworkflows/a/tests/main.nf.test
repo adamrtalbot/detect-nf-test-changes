@@ -2,7 +2,7 @@ nextflow_process {
 
     name "Test subworkflow A"
     script "../main.nf"
-    process "SUBWORKFLOW_A"
+    workflow "SUBWORKFLOW_A"
     test("mytest") {
     }
 }
