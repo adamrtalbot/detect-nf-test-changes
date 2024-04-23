@@ -86,8 +86,9 @@ class NfTest:
         dependencies (list[str]): The dependencies of the test.
     """
 
-    def __init__(self, path):
+    def __init__(self, path, repo: Path = Path(".")):
         self.test_path = path
+        self.repo = repo
         self.populate_attributes()
 
     def __str__(self):
@@ -119,10 +120,20 @@ class NfTest:
             if line.strip().startswith("script"):
                 script_path = Path(line.strip().split()[1].strip("\"'"))
                 nf_path = self.test_path.parent.joinpath(script_path)
+                # If using a relative path
                 if nf_path.exists():
-                    return nf_path.resolve()
+                    return nf_path
+                # If using relative to the root path
+                elif self.repo.joinpath(script_path).exists():
+                    return self.repo.joinpath(script_path)
+                # Finally, relative to where we're running the script.
+                # Unlikely but not impossible
+                elif script_path.exists():
+                    return script_path
                 else:
-                    raise FileNotFoundError(f"Script file not found: {nf_path}")
+                    raise FileNotFoundError(
+                        f"Script file not found at {nf_path} or {script_path}"
+                    )
         else:
             raise ValueError("Script line not found in nf-test file.")
 
@@ -161,12 +172,11 @@ class NfTest:
             if (
                 line.strip().startswith(("workflow", "process", "function"))
                 and len(words) == 2
-                and re.match(r'^".*"$', words[1]) is not None
             ):
                 keyword = words[0]
                 name = words[1].strip("'\"")  # Strip both single and double quotes
                 return (TestTargetType(keyword), name)
-        return (TestTargetType["pipeline"], "PIPELINE")
+        return (TestTargetType("pipeline"), "PIPELINE")
 
     def find_run_statements(self) -> list[str]:
         """
@@ -490,7 +500,10 @@ if __name__ == "__main__":
             changed_files, include_files
         )
 
-    nf_test_objects = [NfTest(file) for file in detect_files([Path(".")], "*.nf.test")]
+    nf_test_objects = [
+        NfTest(_nf_test_file, repo=root_path)
+        for _nf_test_file in detect_files([root_path], "*.nf.test")
+    ]
 
     # Get intersect of changed files and Nextflow components with nf-test files
     directly_modified_nf_tests = [
@@ -502,9 +515,9 @@ if __name__ == "__main__":
 
     # Get all tests whose dependencies have changed
     indirectly_modified_nf_tests = [
-        nf_test
-        for nf_test in nf_test_objects
-        if nf_test.find_matching_dependencies(directly_modified_nf_tests) != []
+        _nf_test_obj
+        for _nf_test_obj in nf_test_objects
+        if _nf_test_obj.find_matching_dependencies(directly_modified_nf_tests) != []
     ]
 
     # Get union of all test files
@@ -524,7 +537,11 @@ if __name__ == "__main__":
     # It's a bit much but might as well do all path manipulation in one place
     normalised_nf_test_path = list(
         {
-            str(nf_test.get_parents(args.n_parents).resolve().relative_to(root_path))
+            str(
+                nf_test.get_parents(args.n_parents)
+                .resolve()
+                .relative_to(root_path.resolve())
+            )
             for nf_test in only_selected_nf_tests
         }
     )
