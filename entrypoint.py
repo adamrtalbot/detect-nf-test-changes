@@ -232,9 +232,11 @@ class NfTest:
         glob_path = self.root_path.joinpath("*")
 
         in_root_dir = path.match(glob_path)
-        match_nf_file = path.match(self.nextflow.path)
-        match_test_file = path.match(self.test_path)
-        match_config_file = path.match(self.config_file) if self.config_file else False
+        match_nf_file = path.match(self.nextflow.path.resolve())
+        match_test_file = path.match(self.test_path.resolve())
+        match_config_file = (
+            path.match(self.config_file.resolve()) if self.config_file else False
+        )
         return any([in_root_dir, match_nf_file, match_test_file, match_config_file])
 
     def find_matching_dependencies(self, other_nf_tests):
@@ -401,7 +403,7 @@ def find_changed_files(
         # If file does not match any in the ignore list, add containing directory to changed_files
         if not any(filepath.match(ignored_path) for ignored_path in ignore):
             # Prepend the root of the path for better scanning
-            changed_files.append(path.joinpath(filepath))
+            changed_files.append(path.joinpath(filepath).resolve())
 
     # Uniqueify the results before returning for efficiency
     return list(set(changed_files))
