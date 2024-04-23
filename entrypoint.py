@@ -243,6 +243,19 @@ class NfTest:
             if nf_test.test_name.casefold() in self.dependencies
         ]
 
+    def get_parents(self, n: int) -> Path:
+        """
+        Get the parent directory of a path n levels up.
+        Args:
+            n (int): The number of levels to go up.
+        Returns:
+            Path: The parent directory n levels up.
+        """
+        _path = self.test_path
+        for _ in range(n):
+            _path = _path.parent
+        return _path
+
 
 def parse_args() -> argparse.Namespace:
     """
@@ -507,11 +520,14 @@ if __name__ == "__main__":
         nf_test for nf_test in all_nf_tests if nf_test.test_type.value in args.types
     ]
 
-    # Remove root from path and stringify
-    normalised_nf_test_path = [
-        str(nf_test.test_path.resolve().relative_to(root_path))
-        for nf_test in only_selected_nf_tests
-    ]
+    # Go back n_parents directories, remove root from path and stringify
+    # It's a bit much but might as well do all path manipulation in one place
+    normalised_nf_test_path = list(
+        {
+            str(nf_test.get_parents(args.n_parents).resolve().relative_to(root_path))
+            for nf_test in only_selected_nf_tests
+        }
+    )
 
     # Print to string for outputs
     output_string = json.dumps(normalised_nf_test_path)
