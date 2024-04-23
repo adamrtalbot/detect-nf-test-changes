@@ -57,7 +57,7 @@ jobs:
           base: main
           n_parents: 2
 
-      - name: Return directory
+      - name: Detect config changes
         id: detect_config_changes
         uses: ./
         with:
