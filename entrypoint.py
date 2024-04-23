@@ -526,7 +526,7 @@ if __name__ == "__main__":
         if nf_test_object.detect_if_path_is_in_test(changed_file)
     ]
     logging.debug(
-        f"Directly modified nf-tests: {[str(x.test_path) for x in directly_modified_nf_tests]}"
+        f"nf-tests with directly modified nf-test scripts, nextflow scripts, or config files: {[str(x.test_path) for x in directly_modified_nf_tests]}"
     )
 
     # Get all tests whose dependencies have changed
