@@ -13,7 +13,6 @@ import yaml
 from enum import Enum
 from git import Repo
 from pathlib import Path
-from typing import Literal
 
 
 def parse_args() -> argparse.Namespace:
@@ -450,11 +449,9 @@ if __name__ == "__main__":
 
     # Get all tests whose dependencies have changed
     indirectly_modified_nf_tests = [
-        downstream_nf_test
-        for upstream_nf_test in nf_test_objects
-        for downstream_nf_test in upstream_nf_test.find_matching_dependencies(
-            directly_modified_nf_tests
-        )
+        nf_test
+        for nf_test in nf_test_objects
+        if nf_test.find_matching_dependencies(directly_modified_nf_tests) != []
     ]
 
     # Get union of all test files
@@ -465,10 +462,15 @@ if __name__ == "__main__":
         }
     )
 
+    # Filter down to only relevant tests
+    only_selected_nf_tests = [
+        nf_test for nf_test in all_nf_tests if nf_test.test_type.value in args.types
+    ]
+
     # Remove root from path and stringify
     normalised_nf_test_path = [
         str(nf_test.test_path.resolve().relative_to(root_path))
-        for nf_test in all_nf_tests
+        for nf_test in only_selected_nf_tests
     ]
 
     # Print to string for outputs
