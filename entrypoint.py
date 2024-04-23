@@ -14,7 +14,6 @@ from enum import Enum
 from git import Repo
 from pathlib import Path
 
-from enum import Enum
 
 
 class TestTargetType(Enum):
