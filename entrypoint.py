@@ -14,85 +14,14 @@ from enum import Enum
 from git import Repo
 from pathlib import Path
 
-
-def parse_args() -> argparse.Namespace:
-    """
-    Parse command line arguments and return an ArgumentParser object.
-
-    Returns:
-        argparse.ArgumentParser: The ArgumentParser object with the parsed arguments.
-    """
-    parser = argparse.ArgumentParser(
-        description="Scan *.nf.test files for function/process/workflow name and return as a JSON list"
-    )
-    parser.add_argument(
-        "-p",
-        "--path",
-        help="Path to scan for nf-test files. Should be root of repository.",
-        default=".",
-    )
-    parser.add_argument(
-        "-r",
-        "--head_ref",
-        required=True,
-        help="Head reference branch (Source branch for a PR).",
-    )
-    parser.add_argument(
-        "-b",
-        "--base_ref",
-        required=True,
-        help="Base reference branch (Target branch for a PR).",
-    )
-    parser.add_argument(
-        "-x",
-        "--ignored_files",
-        nargs="+",
-        default=[
-            ".git/*",
-            ".gitpod.yml",
-            ".prettierignore",
-            ".prettierrc.yml",
-            "*.md",
-            "*.png",
-            "modules.json",
-            "pyproject.toml",
-            "tower.yml",
-        ],
-        help="List of files or file substrings to ignore.",
-    )
-    parser.add_argument(
-        "-i",
-        "--include",
-        type=Path,
-        default=None,
-        help="Path to an include file containing a YAML of key value pairs to include in changed files. I.e., return the current directory if an important file is changed.",
-    )
-    parser.add_argument(
-        "-l",
-        "--log-level",
-        choices=["DEBUG", "INFO", "WARNING", "ERROR"],
-        type=str,
-        default="INFO",
-        help="Logging level",
-    )
-    parser.add_argument(
-        "-t",
-        "--types",
-        type=str,
-        default="function,process,workflow,pipeline",
-        help="Types of tests to include.",
-    )
-    parser.add_argument(
-        "-n",
-        "--n_parents",
-        type=int,
-        default=0,
-        help="Number of parents to up to return. 0 for file, 1 for immediate dir, 2 for parent dir, etc.",
-    )
-    return parser.parse_args()
+from enum import Enum
 
 
 class TestTargetType(Enum):
+    """
+    Represents the type of test target.
+    """
+
     FUNCTION: str = "function"
     PROCESS: str = "process"
     WORKFLOW: str = "workflow"
@@ -100,24 +29,36 @@ class TestTargetType(Enum):
 
 
 class NextflowFile:
+    """
+    Represents a Nextflow file.
+
+    Attributes:
+        path (str): The path to the Nextflow file.
+        lines (list[str]): The lines of the Nextflow file.
+        includes (list[str]): A list of imported Nextflow workflows, processes or functions
+    """
+
     def __init__(self, path):
         self.path = path
         self.lines = self.read_nf_file()
         self.includes = self.find_include_statements()
 
     def read_nf_file(self) -> list[str]:
+        """
+        Read the Nextflow file and return its lines as a list.
+
+        Returns:
+            list[str]: The lines of the Nextflow file.
+        """
         with open(self.path, "r") as f:
             return f.readlines()
 
     def find_include_statements(self) -> list[str]:
         """
-        Find all include statements in a list of lines from a Nextflow file.
-
-        Args:
-            lines (list): List of lines to scan.
+        Find all include statements in the Nextflow file.
 
         Returns:
-            list: List of include statements.
+            list[str]: The include statements found in the Nextflow file.
         """
         result = []
         for line in self.lines:
@@ -128,6 +69,23 @@ class NextflowFile:
 
 
 class NfTest:
+    """
+    Represents a nf-test file.
+
+    Attributes:
+        test_path (Path): The path to the test file.
+        test_dir (Path): The directory containing the test file.
+        lines (list[str]): The lines of the test file.
+        test_type (TestTargetType): The type of the test.
+        test_name (str): The name of the test.
+        run_statements (list[str]): The run statements in the test.
+        config_file (Path | None): The path to the configuration file, or None if it doesn't exist.
+        nextflow_path (Path): The path to the Nextflow script.
+        nextflow (NextflowFile): The NextflowFile object representing the Nextflow script.
+        root_path (Path): The common path between the Nextflow script and the test file.
+        dependencies (list[str]): The dependencies of the test.
+    """
+
     def __init__(self, path):
         self.test_path = path
         self.populate_attributes()
@@ -271,14 +229,96 @@ class NfTest:
 
     def find_matching_dependencies(self, other_nf_tests):
         """
-        Finds all dependencies of this test as a list. This matches purely on name
-        """
+        Finds and returns a list of NF tests from `other_nf_tests` that have matching test names in `self.dependencies`.
 
+        Args:
+            other_nf_tests (list): A list of NF tests to compare against.
+
+        Returns:
+            list: A list of NF tests that have matching test names in `self.dependencies`.
+        """
         return [
             nf_test
             for nf_test in other_nf_tests
             if nf_test.test_name.casefold() in self.dependencies
         ]
+
+
+def parse_args() -> argparse.Namespace:
+    """
+    Parse command line arguments and return an ArgumentParser object.
+
+    Returns:
+        argparse.ArgumentParser: The ArgumentParser object with the parsed arguments.
+    """
+    parser = argparse.ArgumentParser(
+        description="Scan *.nf.test files for function/process/workflow name and return as a JSON list"
+    )
+    parser.add_argument(
+        "-p",
+        "--path",
+        help="Path to scan for nf-test files. Should be root of repository.",
+        default=".",
+    )
+    parser.add_argument(
+        "-r",
+        "--head_ref",
+        required=True,
+        help="Head reference branch (Source branch for a PR).",
+    )
+    parser.add_argument(
+        "-b",
+        "--base_ref",
+        required=True,
+        help="Base reference branch (Target branch for a PR).",
+    )
+    parser.add_argument(
+        "-x",
+        "--ignored_files",
+        nargs="+",
+        default=[
+            ".git/*",
+            ".gitpod.yml",
+            ".prettierignore",
+            ".prettierrc.yml",
+            "*.md",
+            "*.png",
+            "modules.json",
+            "pyproject.toml",
+            "tower.yml",
+        ],
+        help="List of files or file substrings to ignore.",
+    )
+    parser.add_argument(
+        "-i",
+        "--include",
+        type=Path,
+        default=None,
+        help="Path to an include file containing a YAML of key value pairs to include in changed files. I.e., return the current directory if an important file is changed.",
+    )
+    parser.add_argument(
+        "-l",
+        "--log-level",
+        choices=["DEBUG", "INFO", "WARNING", "ERROR"],
+        type=str,
+        default="INFO",
+        help="Logging level",
+    )
+    parser.add_argument(
+        "-t",
+        "--types",
+        type=str,
+        default="function,process,workflow,pipeline",
+        help="Types of tests to include.",
+    )
+    parser.add_argument(
+        "-n",
+        "--n_parents",
+        type=int,
+        default=0,
+        help="Number of parents to up to return. 0 for file, 1 for immediate dir, 2 for parent dir, etc.",
+    )
+    return parser.parse_args()
 
 
 def read_yaml_inverted(file_path: str) -> dict:
