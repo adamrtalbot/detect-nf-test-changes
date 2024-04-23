@@ -7,8 +7,8 @@ import argparse
 import json
 import logging
 import os
-import re
 import yaml
+import logging
 
 from enum import Enum
 from git import Repo
@@ -490,39 +490,58 @@ if __name__ == "__main__":
     subworkflows_path = Path(root_path, "subworkflows")
     workflows_path = Path(root_path, "workflows")
 
-    # Parse nf-test files for target test tags
+    logging.info(
+        f"Getting files that are different between {args.head_ref} and {args.base_ref}"
+    )
     changed_files = find_changed_files(
         root_path, args.head_ref, args.base_ref, args.ignored_files
     )
+    logging.debug(f"Found changed files:{changed_files}")
 
     # If an additional include YAML is added, we detect additional changed dirs to include
     if args.include:
+        logging.debug(f"Reading include file: {args.include}")
         include_files = read_yaml_inverted(args.include)
+        logging.info(f"Supplementing changed files with include files: {include_files}")
         changed_files = changed_files + detect_include_files(
             changed_files, include_files
         )
 
+    logging.info("Parsing nf-test files...")
     nf_test_objects = [
         NfTest(_nf_test_file, repo=root_path)
         for _nf_test_file in detect_files([root_path], "*.nf.test")
     ]
+    logging.debug(f"Found nf-test files: {[str(x.test_path) for x in nf_test_objects]}")
 
+    logging.info(
+        "Getting intersect of changed files and Nextflow components with nf-test files..."
+    )
     # Get intersect of changed files and Nextflow components with nf-test files
+    logging.info("Finding Nextflow components which have been modified...")
     directly_modified_nf_tests = [
         nf_test_object
         for changed_file in changed_files
         for nf_test_object in nf_test_objects
         if nf_test_object.detect_if_path_is_in_test(changed_file)
     ]
+    logging.debug(
+        f"Directly modified nf-tests: {[str(x.test_path) for x in directly_modified_nf_tests]}"
+    )
 
     # Get all tests whose dependencies have changed
+    logging.info("Finding Nextflow components whose dependencies have changed...")
     indirectly_modified_nf_tests = [
         _nf_test_obj
         for _nf_test_obj in nf_test_objects
         if _nf_test_obj.find_matching_dependencies(directly_modified_nf_tests) != []
     ]
+    logging.debug(
+        f"Indirectly modified nf-tests: {[str(x.test_path) for x in indirectly_modified_nf_tests]}"
+    )
 
     # Get union of all test files
+    logging.debug("Getting union of all nf-test files...")
     all_nf_tests = list(
         {
             nf_test
@@ -531,12 +550,14 @@ if __name__ == "__main__":
     )
 
     # Filter down to only relevant tests
+    logging.debug(f"Filtering down to only relevant test types: {args.types}")
     only_selected_nf_tests = [
         nf_test for nf_test in all_nf_tests if nf_test.test_type.value in args.types
     ]
 
     # Go back n_parents directories, remove root from path and stringify
     # It's a bit much but might as well do all path manipulation in one place
+    logging.info("Normalising test file paths")
     normalised_nf_test_path = list(
         {
             str(
@@ -549,6 +570,7 @@ if __name__ == "__main__":
     )
 
     # Print to string for outputs
+    logging.debug("Creating output string...")
     output_string = json.dumps(normalised_nf_test_path)
 
     if "GITHUB_OUTPUT" in os.environ:
@@ -557,5 +579,5 @@ if __name__ == "__main__":
                 f"components={output_string}",
                 file=f,
             )
-
+    logging.info(f"Complete, reporting the following files: {output_string}")
     print(output_string)
