@@ -158,6 +158,57 @@ jobs:
         path: ["${{ fromJson(needs.nf-test-changes.outputs.changes) }}"]
 ```
 
+## Contributing
+
+All contributions are welcome. Check out the workflow described [here](https://gist.github.com/Chaser324/ce0505fbed06b947d962) for an overview of the fork and merge workflow we recommend.
+
+Test data is kept in [.github/workflow/test.tar.gz](./.github/workflows/test.tar.gz). If you uncompress this tar you should find a fake Nextflow workflow which includes 2 modules and a subworkflow. In this repo there is a single modification to the `modules/a/main.nf` file on the `change_module_a` branch. You can use this as example test data for the Python script.
+
+```text
+.
+├── ignoreme.txt
+├── include.yml
+├── main.nf
+├── modules
+│   ├── a
+│   │   ├── main.nf
+│   │   └── tests
+│   │       └── main.nf.test
+│   ├── b
+│   │   ├── main.nf
+│   │   └── tests
+│   │       └── main.nf.test
+│   └── velocyto
+│       ├── main.nf
+│       └── tests
+│           └── main.nf.test
+├── subworkflows
+│   └── a
+│       ├── main.nf
+│       └── tests
+│           └── main.nf.test
+└── workflows
+```
+
+The Python code itself is found at [entrypoint.py](./entrypoint.py). Most of the functional code is here, so modify this to change the behaviour of the software.
+
+When deployed as a Github Action, this builds a container with the [Dockerfile](./Dockerfile) which runs the [entrypoint.sh](./entrypoint.sh) script. Arguments are passed into the `entrypoint.sh` script which launch `entrypoint.py` on the command line. It's a bit convoluted, but that's how we got it to work.
+
+As a quick overview, here's how you should make a change:
+
+1. Create a new branch
+2. Unzip `.github/workflows/test.tar.gz` to `.github/workflows/test/`
+3. Introduce a new change to the test data set in `.github/workflows/test/` and commit it to a new branch (note this is for test data only)
+4. Run `python entrypoint.py -p .github/worfklows/test/ -b main -r $YOUR_BRANCH` to test the code works
+5. Open a new branch in the repo for your changes
+6. Make changes to `entrypoint.py`, `entrypoint.sh` or the `Dockerfile`. 
+7. Check it works by repeating step 4 and seeing if you get the expected outcome
+8. If it works, add the check to the test CI in [`.github/workflow/test.yml](./.github/workflows/test.yml)
+9. Zip up the test directory using the following command: `tar -czvf .github/workflows/test.tar.gz .github/workflows/test`
+10. Commit the changes, push the branch and open a pull request to the upstream repo.
+
+Any questions, don't hesitate to ask on the Github Issues page or Nextflow or nf-core Slack.
+
 ## Authors
 
 The Python script was written by @adamrtalbot and @CarsonJM before being translated into a Github Action by @adamrtalbot. @sateeshperi and @mashehu provided feedback, advice and emotional support.
