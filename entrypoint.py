@@ -423,7 +423,7 @@ def detect_include_files(
         # If file is in the include_files, we return the key instead of the value
         for include_path, include_key in include_files.items():
             if filepath.match(include_path):
-                new_changed_files.append(Path(include_key))
+                new_changed_files.append(Path(include_key).resolve())
     return new_changed_files
 
 
