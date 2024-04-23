@@ -65,6 +65,14 @@ jobs:
           head: modify_nextflow_config_in_module_c
           base: main
 
+      - name: Detect additional include statement file
+        id: detect_additional_include_file
+        uses: ./
+        with:
+          root: testrepo/test
+          head: modify_main_nextflow_file
+          base: main
+
       - name: print outputs
         run: |
           echo Default: ${{ steps.detect_module_a_default.outputs.components }}
@@ -72,3 +80,4 @@ jobs:
           echo No workflows: ${{ steps.do_not_return_workflows.outputs.components }}
           echo Directories: ${{ steps.detect_module_a_directory.outputs.components }}
           echo Config files: ${{ steps.detect_config_changes.outputs.components }}
+          echo Additional include file: ${{ steps.detect_additional_include_file.outputs.components }}
