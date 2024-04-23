@@ -15,7 +15,6 @@ from git import Repo
 from pathlib import Path
 
 
-
 class TestTargetType(Enum):
     """
     Represents the type of test target.
@@ -102,7 +101,7 @@ class NfTest:
         self.lines = self.read_test_file(self.test_path)
         self.test_type, self.test_name = self.find_test_type()
         self.run_statements = self.find_run_statements()
-        self.config_file = self.find_config_line()
+        self.config_files = self.find_config_lines()
         self.nextflow_path = self.find_script_line()
         self.nextflow = NextflowFile(self.nextflow_path)
         self.root_path = self.find_common_path()
@@ -136,24 +135,22 @@ class NfTest:
         else:
             raise ValueError("Script line not found in nf-test file.")
 
-    def find_config_line(self) -> Path | None:
+    def find_config_lines(self) -> list[Path]:
         """
-        Finds the configuration line in the given list of lines and returns the resolved path to the configuration file.
+        Finds the configuration files mentioned in the lines of the object.
 
         Returns:
-            A `Path` object representing the resolved path to the configuration file, or `None` if the configuration file
-            does not exist.
+            A list of Path objects representing the paths of the configuration files.
         """
+        config_files = []
         for line in self.lines:
             if line.strip().startswith("config"):
                 script_path = Path(line.strip().split()[1].strip("\"'"))
                 config_path = self.test_path.parent.joinpath(script_path)
                 if config_path.exists():
-                    return config_path.resolve()
-                else:
-                    return None
-        else:
-            return None
+                    config_files.append(config_path.resolve())
+
+        return config_files
 
     def find_test_type(self) -> tuple[TestTargetType, str]:
         """
@@ -233,8 +230,8 @@ class NfTest:
         in_root_dir = path.match(glob_path)
         match_nf_file = path.match(self.nextflow.path.resolve())
         match_test_file = path.match(self.test_path.resolve())
-        match_config_file = (
-            path.match(self.config_file.resolve()) if self.config_file else False
+        match_config_file = any(
+            path.match(config_file.resolve()) for config_file in self.config_files
         )
         return any([in_root_dir, match_nf_file, match_test_file, match_config_file])
 

@@ -57,9 +57,18 @@ jobs:
           base: main
           n_parents: 2
 
+      - name: Return directory
+        id: detect_config_changes
+        uses: ./
+        with:
+          root: testrepo/test
+          head: modify_nextflow_config_in_module_c
+          base: main
+
       - name: print outputs
         run: |
           echo Default: ${{ steps.detect_module_a_default.outputs.components }}
           echo Ignore module A: ${{ steps.ignore_module_a.outputs.components }}
           echo No workflows: ${{ steps.do_not_return_workflows.outputs.components }}
           echo Directories: ${{ steps.detect_module_a_directory.outputs.components }}
+          echo Config files: ${{ steps.detect_config_changes.outputs.components }}
