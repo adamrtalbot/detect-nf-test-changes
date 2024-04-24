@@ -220,7 +220,7 @@ class NfTest:
         Detects if a path is in the test, i.e. the path is either the test itself, the nextflow script, the test directory, or the config file.
 
         Args:
-            path (Path): The path to test if nf-test files .
+            path (Path): The path to test if nf-test files match.
 
         Returns:
             bool: True if the path is in the test files, False otherwise.
