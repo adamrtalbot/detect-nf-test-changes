@@ -220,20 +220,45 @@ class NfTest:
         Detects if a path is in the test, i.e. the path is either the test itself, the nextflow script, the test directory, or the config file.
 
         Args:
-            path (Path): The path to detect.
+            path (Path): The path to test if nf-test files match.
 
         Returns:
-            bool: True if the path is in the test, False otherwise.
+            bool: True if the path is in the test files, False otherwise.
         """
-        glob_path = self.root_path.joinpath("*")
+        glob_path = self.root_path.resolve().joinpath("*")
 
-        in_root_dir = path.match(glob_path)
+        in_root_dir = path.match(glob_path) or path.match(self.root_path.resolve())
+        if in_root_dir:
+            logging.debug(f"Found {path} in root directory of {self.root_path}")
         match_nf_file = path.match(self.nextflow.path.resolve())
+        if match_nf_file:
+            logging.debug(f"Found {path} in nextflow file {self.nextflow.path}")
         match_test_file = path.match(self.test_path.resolve())
+        if match_test_file:
+            logging.debug(f"Found {path} in test file {self.test_path}")
         match_config_file = any(
             path.match(config_file.resolve()) for config_file in self.config_files
         )
-        return any([in_root_dir, match_nf_file, match_test_file, match_config_file])
+        if match_config_file:
+            logging.debug(f"Found ${path} in config file {self.config_files}")
+
+        # On the off chance the path is a directory, we need check the files are not within the changed_file path
+        in_changed_file_path = any(
+            path in x.parents or path == x
+            for x in [self.root_path, self.nextflow.path, self.test_path]
+            + self.config_files
+        )
+        if in_changed_file_path:
+            logging.debug(f"Found ${path} in test files of {self.test_name}")
+        return any(
+            [
+                in_root_dir,
+                match_nf_file,
+                match_test_file,
+                match_config_file,
+                in_changed_file_path,
+            ]
+        )
 
     def find_matching_dependencies(self, other_nf_tests):
         """
@@ -406,7 +431,7 @@ def find_changed_files(
 
 
 def detect_include_files(
-    changed_files: list[Path], include_files: dict[str, str]
+    changed_files: list[Path], include_files: dict[str, str], root: Path
 ) -> list[Path]:
     """
     Detects the include files based on the changed files.
@@ -414,6 +439,7 @@ def detect_include_files(
     Args:
         changed_files (list[Path]): List of paths to the changed files.
         include_files (dict[str, str]): Key-value pairs to return if a certain file has changed. If a file in a directory has changed, it points to a different directory.
+        root (Path): The root path of the repository.
 
     Returns:
         list[Path]: List of paths to representing the keys of the include_files dictionary, where a value matched a path in changed_files.
@@ -423,7 +449,7 @@ def detect_include_files(
         # If file is in the include_files, we return the key instead of the value
         for include_path, include_key in include_files.items():
             if filepath.match(include_path):
-                new_changed_files.append(Path(include_key).resolve())
+                new_changed_files.append(root.joinpath(Path(include_key)).resolve())
     return new_changed_files
 
 
@@ -500,7 +526,7 @@ if __name__ == "__main__":
         include_files = read_yaml_inverted(args.include)
         logging.info(f"Supplementing changed files with include files: {include_files}")
         changed_files = changed_files + detect_include_files(
-            changed_files, include_files
+            changed_files, include_files, root_path
         )
 
     logging.info("Parsing nf-test files...")
@@ -515,6 +541,7 @@ if __name__ == "__main__":
     )
     # Get intersect of changed files and Nextflow components with nf-test files
     logging.info("Finding Nextflow components which have been modified...")
+    # changed_files = [changed_files[1]]  # sneaky debugging thing do not merge
     directly_modified_nf_tests = [
         nf_test_object
         for changed_file in changed_files
