@@ -13,6 +13,7 @@ import logging
 from enum import Enum
 from git import Repo
 from pathlib import Path
+import fnmatch
 
 
 class TestTargetType(Enum):
@@ -419,15 +420,14 @@ def find_changed_files(
 
     # For every file that has changed between commits
     for file in diff_index:
-        logging.debug(f"File found in diff_index: {str(file)}")
         # Get pathlib.Path object
         filepath = Path(file.a_path)
-        logging.debug(f"pathlib.Path object: {str(filepath)}")
+        logging.debug(f"File found in diff_index: {str(filepath)}")
 
         # If file does not match any in the ignore list, add containing directory to changed_files
         match_against_ignored = []
         for ignored_path in ignore:
-            is_matched = filepath.match(ignored_path)
+            is_matched = fnmatch.fnmatch(str(filepath), ignored_path)
             logging.debug(
                 f"Checking match of {str(filepath)} against {str(ignored_path)}: {str(is_matched)}"
             )
