@@ -37,7 +37,7 @@ jobs:
           root: testrepo/test
           head: change_module_a
           base: main
-          ignored: "./modules/a/*"
+          ignored: "modules/a/*"
 
       - name: Do not return workflows
         id: do_not_return_workflows
