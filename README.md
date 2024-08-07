@@ -23,7 +23,7 @@ steps:
 
 ### Ignoring paths
 
-You may want to ignore paths such as docs, strings etc. To do this, specify a list of strings separated by spaces. This supports globbing so use `*` to match multiple. Python [fnmatch.fnmatch](https://docs.python.org/3/library/fnmatch.html) is used for matching the ignored paths. Here are some examples,
+You may want to ignore paths such as docs, strings etc. To do this, specify a list of strings separated by spaces. This supports globbing so use `*` to match multiple. Python [fnmatch.fnmatch](https://docs.python.org/3/library/fnmatch.html) is used for matching the ignored paths. Here are some examples:
 
 - `.git/*`: Ignore all files and directories inside the `.git` directory
 - `.gitpod.yml`: Ignore `.gitpod.yml` file in the root directory
