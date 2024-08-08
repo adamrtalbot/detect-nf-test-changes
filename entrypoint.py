@@ -13,6 +13,7 @@ import logging
 from enum import Enum
 from git import Repo
 from pathlib import Path
+import fnmatch
 
 
 class TestTargetType(Enum):
@@ -421,8 +422,17 @@ def find_changed_files(
     for file in diff_index:
         # Get pathlib.Path object
         filepath = Path(file.a_path)
+        logging.debug(f"File found in diff_index: {str(filepath)}")
+
         # If file does not match any in the ignore list, add containing directory to changed_files
-        if not any(filepath.match(ignored_path) for ignored_path in ignore):
+        match_against_ignored = []
+        for ignored_path in ignore:
+            is_matched = fnmatch.fnmatch(str(filepath), ignored_path)
+            logging.debug(
+                f"Checking match of {str(filepath)} against {str(ignored_path)}: {str(is_matched)}"
+            )
+            match_against_ignored.append(is_matched)
+        if not any(match_against_ignored):
             # Prepend the root of the path for better scanning
             changed_files.append(path.joinpath(filepath).resolve())
 
