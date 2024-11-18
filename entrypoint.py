@@ -294,7 +294,7 @@ class NfTest:
         """
         Finds and returns a list of NF tests from `other_nf_tests` that have matching tags in `self.tags`.
         """
-        return [nf_test for nf_test in other_nf_tests if nf_test.tag in self.tags]
+        return [nf_test for nf_test in other_nf_tests if nf_test.tags in self.tags]
 
     def get_parents(self, n: int) -> Path:
         """
