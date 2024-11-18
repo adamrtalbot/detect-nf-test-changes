@@ -83,6 +83,7 @@ class NfTest:
         nextflow (NextflowFile): The NextflowFile object representing the Nextflow script.
         root_path (Path): The common path between the Nextflow script and the test file.
         dependencies (list[str]): The dependencies of the test.
+        tags (list[str]): The tags of the test.
     """
 
     def __init__(self, path, repo: Path = Path(".")):
@@ -107,6 +108,7 @@ class NfTest:
         self.nextflow = NextflowFile(self.nextflow_path)
         self.root_path = self.find_common_path()
         self.dependencies = self.nextflow.includes + self.run_statements
+        self.tag = self.find_tags()
 
     def find_script_line(self) -> Path:
         """
@@ -216,6 +218,17 @@ class NfTest:
         # Return common path
         return test_path_dir.joinpath(diff).resolve()
 
+    def find_tags(self) -> list[str]:
+        """
+        Find all tags in the Nextflow file.
+        """
+        result = []
+        for line in self.lines:
+            if line.strip().startswith("tag "):
+                tag = line.strip().removeprefix("tag ").strip().strip("'\"").casefold()
+                result.append(tag)
+        return result
+
     def detect_if_path_is_in_test(self, path: Path) -> bool:
         """
         Detects if a path is in the test, i.e. the path is either the test itself, the nextflow script, the test directory, or the config file.
@@ -276,6 +289,12 @@ class NfTest:
             for nf_test in other_nf_tests
             if nf_test.test_name.casefold() in self.dependencies
         ]
+
+    def find_matching_tags(self, other_nf_tests):
+        """
+        Finds and returns a list of NF tests from `other_nf_tests` that have matching tags in `self.tags`.
+        """
+        return [nf_test for nf_test in other_nf_tests if nf_test.tag in self.tags]
 
     def get_parents(self, n: int) -> Path:
         """
@@ -364,6 +383,13 @@ def parse_args() -> argparse.Namespace:
         type=int,
         default=0,
         help="Number of parents to up to return. 0 for file, 1 for immediate dir, 2 for parent dir, etc.",
+    )
+    parser.add_argument(
+        "-T",
+        "--tags",
+        type=str,
+        default="",
+        help="Tags to include.",
     )
     return parser.parse_args()
 
@@ -502,7 +528,6 @@ def detect_files(paths: list[Path], suffix: str) -> list[Path]:
 
 
 if __name__ == "__main__":
-
     # Utility stuff
     args = parse_args()
     logging.basicConfig(level=args.log_level)
@@ -587,6 +612,13 @@ if __name__ == "__main__":
     only_selected_nf_tests = [
         nf_test for nf_test in all_nf_tests if nf_test.test_type.value in args.types
     ]
+    if args.tags:
+        logging.debug(f"Filtering down to only relevant test tags: {args.tags}")
+        only_selected_nf_tests = [
+            nf_test
+            for nf_test in only_selected_nf_tests
+            if nf_test.find_matching_tags(only_selected_nf_tests)
+        ]
 
     # Go back n_parents directories, remove root from path and stringify
     # It's a bit much but might as well do all path manipulation in one place

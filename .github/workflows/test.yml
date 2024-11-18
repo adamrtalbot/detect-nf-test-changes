@@ -73,6 +73,15 @@ jobs:
           head: modify_main_nextflow_file
           base: main
 
+      - name: Detect tags
+        id: detect_tags
+        uses: ./
+        with:
+          root: testrepo/test
+          head: change_module_a
+          base: main
+          tags: "test" # should pick up no tests
+          
       - name: print outputs
         run: |
           echo Default: ${{ steps.detect_module_a_default.outputs.components }}

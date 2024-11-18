@@ -94,6 +94,20 @@ steps:
     include: include.yaml
 ```
 
+### Returning tests with specific tags
+
+You may wish to return tests with specific tags. You can do this by specifying the tags in the `tags` parameter.
+
+```yaml
+steps:
+- uses: actions/checkout@v4
+- uses: adamrtalbot/detect-nf-test
+  with:
+    head: ${{ github.sha }}
+    base: ${{ github.base_ref }}
+    tags: "gpu"
+```
+
 ## Outputs
 
 A list of changed directories or files and their immediate dependencies is returned under the variable `components`. 

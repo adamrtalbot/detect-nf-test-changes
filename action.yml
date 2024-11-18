@@ -31,6 +31,10 @@ inputs:
     description: 'Number of parents of changed files to return. Default is 0, the changed file. 1 to return the parent directory, 2 to return the parent of that directory etc.'
     required: false
     default: '0'
+  tags:
+    description: 'List of tags to include in the output as a comma separated list. Default: "".'
+    required: false
+    default: ''
   log_level:
     description: 'Log level for the action. Default: "INFO".'
     required: false
@@ -50,3 +54,4 @@ runs:
     LOG_LEVEL: ${{ inputs.log_level }}
     TYPES: ${{ inputs.types }}
     N_PARENTS: ${{ inputs.n_parents }}
+    TAGS: ${{ inputs.tags }}
