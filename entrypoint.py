@@ -108,7 +108,7 @@ class NfTest:
         self.nextflow = NextflowFile(self.nextflow_path)
         self.root_path = self.find_common_path()
         self.dependencies = self.nextflow.includes + self.run_statements
-        self.tag = self.find_tags()
+        self.tags = self.find_tags()
 
     def find_script_line(self) -> Path:
         """
