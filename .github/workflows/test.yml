@@ -82,7 +82,7 @@ jobs:
           base: main
           tags: "test" # should pick up no tests
 
-      - name: Detect tags
+      - name: Detect multi-line include
         id: multi_line_include
         uses: ./
         with:
