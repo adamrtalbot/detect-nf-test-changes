@@ -62,7 +62,23 @@ class NextflowFile:
         result = []
         for line in self.lines:
             if "include {" in line:
-                dependency = line.split()[2].strip("'\"").replace("/", "_").casefold()
+                # Handle multi-line include statements
+                if "{" in line and "}" not in line:
+                    # Keep reading lines until we find the closing brace
+                    full_include = line
+                    line_idx = self.lines.index(line) + 1
+                    while (
+                        line_idx < len(self.lines) and "}" not in self.lines[line_idx]
+                    ):
+                        full_include += self.lines[line_idx]
+                        line_idx += 1
+                    if line_idx < len(self.lines):
+                        full_include += self.lines[line_idx]
+                    line = full_include
+
+                # Extract the 'from' part which contains the path
+                from_part = line.split("from")[1].strip()
+                dependency = from_part.strip("'\" \n").replace("/", "_").casefold()
                 result.append(dependency)
         return result
 
