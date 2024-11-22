@@ -81,7 +81,15 @@ jobs:
           head: change_module_a
           base: main
           tags: "test" # should pick up no tests
-          
+
+      - name: Detect multi-line include
+        id: multi_line_include
+        uses: ./
+        with:
+          root: testrepo/test
+          head: multi_line_include
+          base: main
+
       - name: print outputs
         run: |
           echo Default: ${{ steps.detect_module_a_default.outputs.components }}
@@ -90,3 +98,5 @@ jobs:
           echo Directories: ${{ steps.detect_module_a_directory.outputs.components }}
           echo Config files: ${{ steps.detect_config_changes.outputs.components }}
           echo Additional include file: ${{ steps.detect_additional_include_file.outputs.components }}
+          echo Tags: ${{ steps.detect_tags.outputs.components }}
+          echo Multi-line include: ${{ steps.multi_line_include.outputs.components }}
