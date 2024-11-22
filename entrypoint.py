@@ -77,8 +77,7 @@ class NextflowFile:
                     line = full_include
 
                 # Extract the 'from' part which contains the path
-                from_part = line.split("from")[1].strip()
-                dependency = from_part.strip("'\" \n").replace("/", "_").casefold()
+                dependency = line.split()[2].strip("'\"").replace("/", "_").casefold()
                 result.append(dependency)
         return result
 
