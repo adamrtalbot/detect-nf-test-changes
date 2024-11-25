@@ -73,27 +73,24 @@ jobs:
           head: modify_main_nextflow_file
           base: main
 
-      - name: Detect tags
+      - name: Include tags
         id: detect_tags
         uses: ./
         with:
           root: testrepo/test
-          head: change_module_a
+          head: modify_main_nextflow_file
           base: main
           tags: "PIPELINE" # should pick one test
 
-
-      - name: Detect tags
+      - name: Exclude tags
         id: exclude_tags
         uses: ./
         with:
           root: testrepo/test
-          head: change_module_a
+          head: modify_main_nextflow_file
           base: main
           tags: "PIPELINE" # should pick one test
           exclude_tags: "PIPELINE" # should drop the test
-
-          
 
       - name: Detect multi-line include
         id: multi_line_include
