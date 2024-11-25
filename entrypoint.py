@@ -4,16 +4,15 @@
 # with changed dependencies, then return as a JSON list
 
 import argparse
+import fnmatch
 import json
 import logging
 import os
-import yaml
-import logging
-
 from enum import Enum
-from git import Repo
 from pathlib import Path
-import fnmatch
+
+import yaml
+from git import Repo
 
 
 class TestTargetType(Enum):
@@ -39,6 +38,7 @@ class NextflowFile:
 
     def __init__(self, path):
         self.path = path
+        logging.debug(f"Reading {self.path}")
         self.lines = self.read_nf_file()
         self.includes = self.find_include_statements()
 
@@ -225,8 +225,10 @@ class NfTest:
         result = []
         for line in self.lines:
             if line.strip().startswith("tag "):
+                logging.debug(f"Found tag line: {line}")
                 tag = line.strip().removeprefix("tag ").strip().strip("'\"").casefold()
                 result.append(tag)
+        logging.debug(f"Found tags: {result}")
         return result
 
     def detect_if_path_is_in_test(self, path: Path) -> bool:
