@@ -546,6 +546,8 @@ if __name__ == "__main__":
     logging.basicConfig(level=args.log_level)
     # Argparse handling of nargs is a bit rubbish. So we do it manually here.
     args.types = args.types.split(",")
+    args.tags = args.tags.split(",")
+    args.exclude_tags = args.exclude_tags.split(",")
     # Quick validation of args.types since we cant do this in argparse
     if any(
         _type not in ["function", "process", "workflow", "pipeline"]
