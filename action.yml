@@ -35,6 +35,10 @@ inputs:
     description: 'List of tags to include in the output as a comma separated list. Default: "".'
     required: false
     default: ''
+  exclude_tags:
+    description: 'List of tags to exclude in the output as a comma separated list. Default: "".'
+    required: false
+    default: ''
   log_level:
     description: 'Log level for the action. Default: "INFO".'
     required: false
