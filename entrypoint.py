@@ -214,7 +214,10 @@ class NfTest:
         nf_path_dir = self.nextflow.path.parent.resolve()
         test_path_dir = self.test_path.parent.resolve()
         # Find diff between them
-        diff = nf_path_dir.relative_to(test_path_dir, walk_up=True)
+        try:
+            diff = nf_path_dir.relative_to(test_path_dir)
+        except ValueError:
+            diff = nf_path_dir
         # Return common path
         return test_path_dir.joinpath(diff).resolve()
 
