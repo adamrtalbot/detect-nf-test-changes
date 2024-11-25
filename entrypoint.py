@@ -297,9 +297,14 @@ class NfTest:
 
     def find_matching_tags(self, other_nf_tests):
         """
-        Finds and returns a list of NF tests from `other_nf_tests` that have matching tags in `self.tags`.
+        Finds and returns a list of NF tests from `other_nf_tests` that have matching tags in `self.tags`. If exclude_tags is specified, it will exclude those tags.
+
         """
-        return [nf_test for nf_test in other_nf_tests if nf_test.tags in self.tags]
+        return [
+            nf_test
+            for nf_test in other_nf_tests
+            if nf_test.tags in self.tags and nf_test.tags not in self.exclude_tags
+        ]
 
     def get_parents(self, n: int) -> Path:
         """
@@ -395,6 +400,9 @@ def parse_args() -> argparse.Namespace:
         type=str,
         default="",
         help="Tags to include.",
+    )
+    parser.add_argument(
+        "-xT", "--exclude_tags", type=str, default="", help="Tags to exclude."
     )
     return parser.parse_args()
 
@@ -618,13 +626,18 @@ if __name__ == "__main__":
         nf_test for nf_test in all_nf_tests if nf_test.test_type.value in args.types
     ]
     if args.tags:
-        logging.debug(f"Filtering down to only relevant test tags: {args.tags}")
+        logging.debug(f"Filtering down to only included test tags: {args.tags}")
+        only_selected_nf_tests = [
+            nf_test for nf_test in only_selected_nf_tests if nf_test.tags in args.tags
+        ]
+
+    if args.exclude_tags:
+        logging.debug(f"Excluding test tags: {args.exclude_tags}")
         only_selected_nf_tests = [
             nf_test
             for nf_test in only_selected_nf_tests
-            if nf_test.find_matching_tags(only_selected_nf_tests)
+            if nf_test.tags not in args.exclude_tags
         ]
-
     # Go back n_parents directories, remove root from path and stringify
     # It's a bit much but might as well do all path manipulation in one place
     logging.info("Normalising test file paths")

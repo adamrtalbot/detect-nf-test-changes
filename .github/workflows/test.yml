@@ -80,7 +80,19 @@ jobs:
           root: testrepo/test
           head: change_module_a
           base: main
-          tags: "test" # should pick up no tests
+          tags: "PIPELINE" # should pick one test
+
+
+      - name: Detect tags
+        id: exclude_tags
+        uses: ./
+        with:
+          root: testrepo/test
+          head: change_module_a
+          base: main
+          tags: "PIPELINE" # should pick one test
+          exclude_tags: "PIPELINE" # should drop the test
+
           
       - name: print outputs
         run: |
@@ -90,3 +102,5 @@ jobs:
           echo Directories: ${{ steps.detect_module_a_directory.outputs.components }}
           echo Config files: ${{ steps.detect_config_changes.outputs.components }}
           echo Additional include file: ${{ steps.detect_additional_include_file.outputs.components }}
+          echo Tags: ${{ steps.detect_tags.outputs.components }}
+          echo Exclude tags: ${{ steps.exclude_tags.outputs.components }}
