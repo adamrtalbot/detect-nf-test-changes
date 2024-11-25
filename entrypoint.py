@@ -4,16 +4,15 @@
 # with changed dependencies, then return as a JSON list
 
 import argparse
+import fnmatch
 import json
 import logging
 import os
-import yaml
-import logging
-
 from enum import Enum
-from git import Repo
 from pathlib import Path
-import fnmatch
+
+import yaml
+from git import Repo
 
 
 class TestTargetType(Enum):
@@ -39,6 +38,7 @@ class NextflowFile:
 
     def __init__(self, path):
         self.path = path
+        logging.debug(f"Reading {self.path}")
         self.lines = self.read_nf_file()
         self.includes = self.find_include_statements()
 
@@ -229,7 +229,10 @@ class NfTest:
         nf_path_dir = self.nextflow.path.parent.resolve()
         test_path_dir = self.test_path.parent.resolve()
         # Find diff between them
-        diff = nf_path_dir.relative_to(test_path_dir, walk_up=True)
+        try:
+            diff = nf_path_dir.relative_to(test_path_dir)
+        except ValueError:
+            diff = nf_path_dir
         # Return common path
         return test_path_dir.joinpath(diff).resolve()
 
@@ -240,8 +243,10 @@ class NfTest:
         result = []
         for line in self.lines:
             if line.strip().startswith("tag "):
+                logging.debug(f"Found tag line: {line}")
                 tag = line.strip().removeprefix("tag ").strip().strip("'\"").casefold()
                 result.append(tag)
+        logging.debug(f"Found tags: {result}")
         return result
 
     def detect_if_path_is_in_test(self, path: Path) -> bool:
@@ -307,9 +312,14 @@ class NfTest:
 
     def find_matching_tags(self, other_nf_tests):
         """
-        Finds and returns a list of NF tests from `other_nf_tests` that have matching tags in `self.tags`.
+        Finds and returns a list of NF tests from `other_nf_tests` that have matching tags in `self.tags`. If exclude_tags is specified, it will exclude those tags.
+
         """
-        return [nf_test for nf_test in other_nf_tests if nf_test.tags in self.tags]
+        return [
+            nf_test
+            for nf_test in other_nf_tests
+            if nf_test.tags in self.tags and nf_test.tags not in self.exclude_tags
+        ]
 
     def get_parents(self, n: int) -> Path:
         """
@@ -405,6 +415,9 @@ def parse_args() -> argparse.Namespace:
         type=str,
         default="",
         help="Tags to include.",
+    )
+    parser.add_argument(
+        "-xT", "--exclude_tags", type=str, default="", help="Tags to exclude."
     )
     return parser.parse_args()
 
@@ -548,6 +561,8 @@ if __name__ == "__main__":
     logging.basicConfig(level=args.log_level)
     # Argparse handling of nargs is a bit rubbish. So we do it manually here.
     args.types = args.types.split(",")
+    args.tags = args.tags.split(",")
+    args.exclude_tags = args.exclude_tags.split(",")
     # Quick validation of args.types since we cant do this in argparse
     if any(
         _type not in ["function", "process", "workflow", "pipeline"]
@@ -628,13 +643,18 @@ if __name__ == "__main__":
         nf_test for nf_test in all_nf_tests if nf_test.test_type.value in args.types
     ]
     if args.tags:
-        logging.debug(f"Filtering down to only relevant test tags: {args.tags}")
+        logging.debug(f"Filtering down to only included test tags: {args.tags}")
+        only_selected_nf_tests = [
+            nf_test for nf_test in only_selected_nf_tests if nf_test.tags in args.tags
+        ]
+
+    if args.exclude_tags:
+        logging.debug(f"Excluding test tags: {args.exclude_tags}")
         only_selected_nf_tests = [
             nf_test
             for nf_test in only_selected_nf_tests
-            if nf_test.find_matching_tags(only_selected_nf_tests)
+            if nf_test.tags not in args.exclude_tags
         ]
-
     # Go back n_parents directories, remove root from path and stringify
     # It's a bit much but might as well do all path manipulation in one place
     logging.info("Normalising test file paths")
