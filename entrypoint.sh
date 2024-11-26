@@ -13,4 +13,4 @@ python /entrypoint.py \
     ${TYPES:+"-t=$TYPES"} \
     ${N_PARENTS:+"--n_parents=$N_PARENTS"} \
     ${TAGS:+"-T=$TAGS"}
-    ${EXCLUDE_TAGS:+"-xT=$EXCLUDE_TAGS"}
+    ${EXCLUDE_TAGS:+"--exclude_tags=$EXCLUDE_TAGS"}

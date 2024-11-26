@@ -417,7 +417,7 @@ def parse_args() -> argparse.Namespace:
         help="Tags to include.",
     )
     parser.add_argument(
-        "-xT", "--exclude_tags", type=str, default="", help="Tags to exclude."
+        "--exclude_tags", type=str, default="", help="Tags to exclude."
     )
     return parser.parse_args()
 
