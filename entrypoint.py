@@ -645,7 +645,9 @@ if __name__ == "__main__":
     if args.tags:
         logging.debug(f"Filtering down to only included test tags: {args.tags}")
         only_selected_nf_tests = [
-            nf_test for nf_test in only_selected_nf_tests if nf_test.tags in args.tags
+            nf_test
+            for nf_test in only_selected_nf_tests
+            if any(tag in args.tags for tag in nf_test.tags)
         ]
 
     if args.exclude_tags:
@@ -653,7 +655,7 @@ if __name__ == "__main__":
         only_selected_nf_tests = [
             nf_test
             for nf_test in only_selected_nf_tests
-            if nf_test.tags not in args.exclude_tags
+            if any(tag in args.exclude_tags for tag in nf_test.tags)
         ]
     # Go back n_parents directories, remove root from path and stringify
     # It's a bit much but might as well do all path manipulation in one place
