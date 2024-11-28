@@ -59,3 +59,4 @@ runs:
     TYPES: ${{ inputs.types }}
     N_PARENTS: ${{ inputs.n_parents }}
     TAGS: ${{ inputs.tags }}
+    EXCLUDE_TAGS: ${{ inputs.exclude_tags }}

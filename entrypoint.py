@@ -310,17 +310,6 @@ class NfTest:
             if nf_test.test_name.casefold() in self.dependencies
         ]
 
-    def find_matching_tags(self, other_nf_tests):
-        """
-        Finds and returns a list of NF tests from `other_nf_tests` that have matching tags in `self.tags`. If exclude_tags is specified, it will exclude those tags.
-
-        """
-        return [
-            nf_test
-            for nf_test in other_nf_tests
-            if nf_test.tags in self.tags and nf_test.tags not in self.exclude_tags
-        ]
-
     def get_parents(self, n: int) -> Path:
         """
         Get the parent directory of a path n levels up.
@@ -416,9 +405,7 @@ def parse_args() -> argparse.Namespace:
         default="",
         help="Tags to include.",
     )
-    parser.add_argument(
-        "--exclude_tags", type=str, default="", help="Tags to exclude."
-    )
+    parser.add_argument("--exclude_tags", type=str, default="", help="Tags to exclude.")
     return parser.parse_args()
 
 
@@ -561,8 +548,8 @@ if __name__ == "__main__":
     logging.basicConfig(level=args.log_level)
     # Argparse handling of nargs is a bit rubbish. So we do it manually here.
     args.types = args.types.split(",")
-    args.tags = args.tags.split(",")
-    args.exclude_tags = args.exclude_tags.split(",")
+    args.tags = [tag.strip().casefold() for tag in args.tags.split(",")]
+    args.exclude_tags = [tag.strip().casefold() for tag in args.exclude_tags.split(",")]
     # Quick validation of args.types since we cant do this in argparse
     if any(
         _type not in ["function", "process", "workflow", "pipeline"]
@@ -644,19 +631,31 @@ if __name__ == "__main__":
     ]
     if args.tags:
         logging.debug(f"Filtering down to only included test tags: {args.tags}")
+        logging.debug(
+            f"Tests before the filter are: {[test.test_path for test in only_selected_nf_tests]}"
+        )
         only_selected_nf_tests = [
             nf_test
             for nf_test in only_selected_nf_tests
             if any(tag in args.tags for tag in nf_test.tags)
         ]
+        logging.debug(
+            f"Tests after the filter are: {[test.test_path for test in only_selected_nf_tests]}"
+        )
 
     if args.exclude_tags:
         logging.debug(f"Excluding test tags: {args.exclude_tags}")
+        logging.debug(
+            f"Tests before the filter are: {[test.test_path for test in only_selected_nf_tests]}"
+        )
         only_selected_nf_tests = [
             nf_test
             for nf_test in only_selected_nf_tests
-            if any(tag in args.exclude_tags for tag in nf_test.tags)
+            if all(tag not in args.exclude_tags for tag in nf_test.tags)
         ]
+        logging.debug(
+            f"Tests after the filter are: {[test.test_path for test in only_selected_nf_tests]}"
+        )
     # Go back n_parents directories, remove root from path and stringify
     # It's a bit much but might as well do all path manipulation in one place
     logging.info("Normalising test file paths")
