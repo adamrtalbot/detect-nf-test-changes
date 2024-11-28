@@ -12,4 +12,5 @@ python /entrypoint.py \
     ${LOG_LEVEL:+"--log-level=$LOG_LEVEL"} \
     ${TYPES:+"-t=$TYPES"} \
     ${N_PARENTS:+"--n_parents=$N_PARENTS"} \
-    ${TAGS:+"-T=$TAGS"}
+    ${TAGS:+"-T=$TAGS"} \
+    ${EXCLUDE_TAGS:+"--exclude_tags=$EXCLUDE_TAGS"}

@@ -73,14 +73,24 @@ jobs:
           head: modify_main_nextflow_file
           base: main
 
-      - name: Detect tags
+      - name: Include tags
         id: detect_tags
         uses: ./
         with:
           root: testrepo/test
-          head: change_module_a
+          head: modify_main_nextflow_file
           base: main
-          tags: "test" # should pick up no tests
+          tags: "PIPELINE" # should pick one test
+
+      - name: Exclude tags
+        id: exclude_tags
+        uses: ./
+        with:
+          root: testrepo/test
+          head: modify_main_nextflow_file
+          base: main
+          tags: "PIPELINE" # should pick one test
+          exclude_tags: "PIPELINE" # should drop the test
 
       - name: Detect multi-line include
         id: multi_line_include
@@ -99,4 +109,5 @@ jobs:
           echo Config files: ${{ steps.detect_config_changes.outputs.components }}
           echo Additional include file: ${{ steps.detect_additional_include_file.outputs.components }}
           echo Tags: ${{ steps.detect_tags.outputs.components }}
+          echo Exclude tags: ${{ steps.exclude_tags.outputs.components }}
           echo Multi-line include: ${{ steps.multi_line_include.outputs.components }}
