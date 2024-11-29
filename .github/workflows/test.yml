@@ -23,7 +23,7 @@ jobs:
           && tar -xzvf .github/workflows/test.tar.gz -C testrepo --no-same-owner
 
       - name: default
-        id: detect_module_a_default
+        id: detect_module_a_default # Expected: modules/a/main.nf, modules/a/tests/main.nf.test
         uses: ./
         with:
           root: testrepo/test
