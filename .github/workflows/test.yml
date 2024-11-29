@@ -112,7 +112,7 @@ jobs:
       - name: Print and assert outputs
         run: |
           echo Default: ${{ steps.detect_module_a_default.outputs.components }}
-          [ '${{ steps.detect_module_a_default.outputs.components }}' = '["modules/a/tests/main.nf.test", "modules/b/tests/main.nf.test"]' ]
+          [ '${{ steps.detect_module_a_default.outputs.components }}' = '["modules/b/tests/main.nf.test"]' ]
           echo Ignore module A: ${{ steps.ignore_module_a.outputs.components }}
           echo No workflows: ${{ steps.do_not_return_workflows.outputs.components }}
           echo Directories: ${{ steps.detect_module_a_directory.outputs.components }}
