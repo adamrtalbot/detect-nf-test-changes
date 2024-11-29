@@ -41,7 +41,7 @@ jobs:
           ignored: "modules/a/*"
           log_level: DEBUG
 
-      - name: Return directory # Expected: modules/b (depends on A), modules/a
+      - name: Return directory # Expected: modules/a, modules/b (depends on A)
         id: detect_module_a_directory
         uses: ./
         with:
@@ -51,7 +51,7 @@ jobs:
           n_parents: 2
           log_level: DEBUG
 
-      - name: Detect config changes # Expected: tests/main.pipeline.nf.test, subworkflows/a/tests/main.nf.test, tests/main.workflow.nf.test, modules/c/tests/main.nf.test
+      - name: Detect config changes # Expected: modules/c/tests/main.nf.test, subworkflows/a/tests/main.nf.test, tests/main.pipeline.nf.test, tests/main.workflow.nf.test
         id: detect_config_changes
         uses: ./
         with:
@@ -60,7 +60,7 @@ jobs:
           base: main
           log_level: DEBUG
       
-      - name: Do not return workflows # Expected: tests/main.pipeline.nf.test, modules/c/tests/main.nf.test; Same as above but without workflows
+      - name: Do not return workflows # Expected: modules/c/tests/main.nf.test, tests/main.pipeline.nf.test; Same as above but without workflows
         id: do_not_return_workflows
         uses: ./
         with:
@@ -70,7 +70,7 @@ jobs:
           types: "function,process,pipeline"
           log_level: DEBUG
 
-      - name: Detect additional include statement file # Expected: tests/main.workflow.nf.test, tests/main.pipeline.nf.test
+      - name: Detect additional include statement file # Expected: tests/main.pipeline.nf.test, tests/main.workflow.nf.test
         id: detect_additional_include_file
         uses: ./
         with:
@@ -118,16 +118,16 @@ jobs:
           [ '${{ steps.ignore_module_a.outputs.components }}' = '[]' ]
           
           echo Directories: ${{ steps.detect_module_a_directory.outputs.components }}
-          [ '${{ steps.detect_module_a_directory.outputs.components }}' = '["modules/b", "modules/a"]' ]
+          [ '${{ steps.detect_module_a_directory.outputs.components }}' = '["modules/a", "modules/b"]' ]
           
           echo Config files: ${{ steps.detect_config_changes.outputs.components }}
-          [ '${{ steps.detect_config_changes.outputs.components }}' = '["tests/main.pipeline.nf.test", "subworkflows/a/tests/main.nf.test", "tests/main.workflow.nf.test", "modules/c/tests/main.nf.test"]' ]
+          [ '${{ steps.detect_config_changes.outputs.components }}' = '["modules/c/tests/main.nf.test", "subworkflows/a/tests/main.nf.test", "tests/main.pipeline.nf.test", "tests/main.workflow.nf.test"]' ]
           
           echo No workflows: ${{ steps.do_not_return_workflows.outputs.components }}
-          [ '${{ steps.do_not_return_workflows.outputs.components }}' = '["tests/main.pipeline.nf.test", "modules/c/tests/main.nf.test"]' ]
+          [ '${{ steps.do_not_return_workflows.outputs.components }}' = '["modules/c/tests/main.nf.test", "tests/main.pipeline.nf.test"]' ]
           
           echo Additional include file: ${{ steps.detect_additional_include_file.outputs.components }}
-          [ '${{ steps.detect_additional_include_file.outputs.components }}' = '["tests/main.workflow.nf.test", "tests/main.pipeline.nf.test"]' ]
+          [ '${{ steps.detect_additional_include_file.outputs.components }}' = '["tests/main.pipeline.nf.test", "tests/main.workflow.nf.test"]' ]
 
           echo Tags: ${{ steps.detect_tags.outputs.components }}
           [ '${{ steps.detect_tags.outputs.components }}' = '["tests/main.pipeline.nf.test"]' ]

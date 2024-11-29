@@ -666,15 +666,17 @@ if __name__ == "__main__":
     # Go back n_parents directories, remove root from path and stringify
     # It's a bit much but might as well do all path manipulation in one place
     logging.info("Normalising test file paths")
-    normalised_nf_test_path = list(
-        {
-            str(
-                nf_test.get_parents(args.n_parents)
-                .resolve()
-                .relative_to(root_path.resolve())
-            )
-            for nf_test in only_selected_nf_tests
-        }
+    normalised_nf_test_path = sorted(
+        list(
+            {
+                str(
+                    nf_test.get_parents(args.n_parents)
+                    .resolve()
+                    .relative_to(root_path.resolve())
+                )
+                for nf_test in only_selected_nf_tests
+            }
+        )
     )
 
     # Print to string for outputs
