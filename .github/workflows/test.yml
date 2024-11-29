@@ -29,6 +29,7 @@ jobs:
           root: testrepo/test
           head: change_module_a
           base: main
+          log_level: DEBUG
 
       - name: Ignore changes in module A
         id: ignore_module_a
@@ -38,6 +39,7 @@ jobs:
           head: change_module_a
           base: main
           ignored: "modules/a/*"
+          log_level: DEBUG
 
       - name: Do not return workflows
         id: do_not_return_workflows
@@ -47,6 +49,7 @@ jobs:
           head: change_module_a
           base: main
           types: "function,process,pipeline"
+          log_level: DEBUG
 
       - name: Return directory
         id: detect_module_a_directory
@@ -56,6 +59,7 @@ jobs:
           head: change_module_a
           base: main
           n_parents: 2
+          log_level: DEBUG
 
       - name: Detect config changes
         id: detect_config_changes
@@ -64,6 +68,7 @@ jobs:
           root: testrepo/test
           head: modify_nextflow_config_in_module_c
           base: main
+          log_level: DEBUG
 
       - name: Detect additional include statement file
         id: detect_additional_include_file
@@ -72,6 +77,7 @@ jobs:
           root: testrepo/test
           head: modify_main_nextflow_file
           base: main
+          log_level: DEBUG
 
       - name: Include tags
         id: detect_tags
@@ -81,6 +87,7 @@ jobs:
           head: modify_main_nextflow_file
           base: main
           tags: "PIPELINE" # should pick one test
+          log_level: DEBUG
 
       - name: Exclude tags
         id: exclude_tags
@@ -91,6 +98,7 @@ jobs:
           base: main
           tags: "PIPELINE" # should pick one test
           exclude_tags: "PIPELINE" # should drop the test
+          log_level: DEBUG
 
       - name: Detect multi-line include
         id: multi_line_include
@@ -99,6 +107,7 @@ jobs:
           root: testrepo/test
           head: multi_line_include
           base: main
+          log_level: DEBUG
 
       - name: print outputs
         run: |
