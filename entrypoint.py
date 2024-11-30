@@ -548,8 +548,15 @@ if __name__ == "__main__":
     logging.basicConfig(level=args.log_level)
     # Argparse handling of nargs is a bit rubbish. So we do it manually here.
     args.types = args.types.split(",")
-    args.tags = [tag.strip().casefold() for tag in args.tags.split(",")]
-    args.exclude_tags = [tag.strip().casefold() for tag in args.exclude_tags.split(",")]
+
+    if args.tags.strip() != "":
+        args.tags = [tag.strip().casefold() for tag in args.tags.split(",")]
+
+    if args.exclude_tags.strip() != "":
+        args.exclude_tags = [
+            tag.strip().casefold() for tag in args.exclude_tags.split(",")
+        ]
+
     # Quick validation of args.types since we cant do this in argparse
     if any(
         _type not in ["function", "process", "workflow", "pipeline"]
@@ -659,15 +666,17 @@ if __name__ == "__main__":
     # Go back n_parents directories, remove root from path and stringify
     # It's a bit much but might as well do all path manipulation in one place
     logging.info("Normalising test file paths")
-    normalised_nf_test_path = list(
-        {
-            str(
-                nf_test.get_parents(args.n_parents)
-                .resolve()
-                .relative_to(root_path.resolve())
-            )
-            for nf_test in only_selected_nf_tests
-        }
+    normalised_nf_test_path = sorted(
+        list(
+            {
+                str(
+                    nf_test.get_parents(args.n_parents)
+                    .resolve()
+                    .relative_to(root_path.resolve())
+                )
+                for nf_test in only_selected_nf_tests
+            }
+        )
     )
 
     # Print to string for outputs
