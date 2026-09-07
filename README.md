@@ -6,6 +6,8 @@ Detect changes in a Nextflow repo and so you can fire off the appropriate nf-tes
 
 This action scans a Nextflow repository for code changes between two branches and identifies any available tests that cover those changes. Furthermore, it will find anything that depends on the changes and identify those files as well.
 
+The runner must provide `git` and a checkout containing the refs to compare.
+
 ## Example
 
 ### Minimal example
@@ -218,18 +220,18 @@ Test data is kept in [.github/workflow/test.tar.gz](./.github/workflows/test.tar
 └── workflows
 ```
 
-The Python code itself is found at [entrypoint.py](./entrypoint.py). Most of the functional code is here, so modify this to change the behaviour of the software.
+The Python code itself is found at [detect_nf_test_changes.py](./detect_nf_test_changes.py). Most of the functional code is here, so modify this to change the behaviour of the software.
 
-When deployed as a Github Action, this builds a container with the [Dockerfile](./Dockerfile) which runs the [entrypoint.sh](./entrypoint.sh) script. Arguments are passed into the `entrypoint.sh` script which launch `entrypoint.py` on the command line. It's a bit convoluted, but that's how we got it to work.
+When deployed as a Github Action, the composite action uses uv to run [detect_nf_test_changes.py](./detect_nf_test_changes.py) with Python 3.12 and the locked dependencies in `detect_nf_test_changes.py.lock`.
 
 As a quick overview, here's how you should make a change:
 
 1. Create a new branch
 2. Unzip `.github/workflows/test.tar.gz` to `.github/workflows/test/`
 3. Introduce a new change to the test data set in `.github/workflows/test/` and commit it to a new branch (note this is for test data only)
-4. Run `python entrypoint.py -p .github/worfklows/test/ -b main -r $YOUR_BRANCH` to test the code works
+4. Run `uv run --frozen --script detect_nf_test_changes.py -p .github/workflows/test/ -b main -r $YOUR_BRANCH` to test the code works
 5. Open a new branch in the repo for your changes
-6. Make changes to `entrypoint.py`, `entrypoint.sh` or the `Dockerfile`. 
+6. Make changes to `detect_nf_test_changes.py` or `action.yml`.
 7. Check it works by repeating step 4 and seeing if you get the expected outcome
 8. If it works, add the check to the test CI in [`.github/workflow/test.yml](./.github/workflows/test.yml)
 9. Zip up the test directory using the following command: `tar -czvf .github/workflows/test.tar.gz .github/workflows/test`

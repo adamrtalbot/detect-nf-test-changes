@@ -1,4 +1,11 @@
 #!/usr/bin/env python
+# /// script
+# requires-python = ">=3.12,<3.13"
+# dependencies = [
+#     "GitPython==3.1.43",
+#     "PyYAML==6.0.1",
+# ]
+# ///
 
 # This script is used to identify *.nf.test files for changed functions/processs/workflows/pipelines and *.nf-test files
 # with changed dependencies, then return as a JSON list
@@ -8,10 +15,16 @@ import fnmatch
 import json
 import logging
 import os
+import shlex
+import shutil
 from enum import Enum
 from pathlib import Path
 
 import yaml
+
+if shutil.which("git") is None:
+    raise RuntimeError("detect-nf-test-changes requires git on the runner")
+
 from git import Repo
 
 
@@ -331,6 +344,10 @@ def parse_args() -> argparse.Namespace:
     Returns:
         argparse.ArgumentParser: The ArgumentParser object with the parsed arguments.
     """
+    head_ref = os.getenv("INPUT_HEAD") or None
+    base_ref = os.getenv("INPUT_BASE") or None
+    ignored_files = os.getenv("INPUT_IGNORED")
+
     parser = argparse.ArgumentParser(
         description="Scan *.nf.test files for function/process/workflow name and return as a JSON list"
     )
@@ -338,42 +355,48 @@ def parse_args() -> argparse.Namespace:
         "-p",
         "--path",
         help="Path to scan for nf-test files. Should be root of repository.",
-        default=".",
+        default=os.getenv("INPUT_ROOT") or ".",
     )
     parser.add_argument(
         "-r",
         "--head_ref",
-        required=True,
+        required=head_ref is None,
+        default=head_ref,
         help="Head reference branch (Source branch for a PR).",
     )
     parser.add_argument(
         "-b",
         "--base_ref",
-        required=True,
+        required=base_ref is None,
+        default=base_ref,
         help="Base reference branch (Target branch for a PR).",
     )
     parser.add_argument(
         "-x",
         "--ignored_files",
         nargs="+",
-        default=[
-            ".git/*",
-            ".gitpod.yml",
-            ".prettierignore",
-            ".prettierrc.yml",
-            "*.md",
-            "*.png",
-            "modules.json",
-            "pyproject.toml",
-            "tower.yml",
-        ],
+        default=(
+            shlex.split(ignored_files)
+            if ignored_files
+            else [
+                ".git/*",
+                ".gitpod.yml",
+                ".prettierignore",
+                ".prettierrc.yml",
+                "*.md",
+                "*.png",
+                "modules.json",
+                "pyproject.toml",
+                "tower.yml",
+            ]
+        ),
         help="List of files or file substrings to ignore.",
     )
     parser.add_argument(
         "-i",
         "--include",
         type=Path,
-        default=None,
+        default=os.getenv("INPUT_INCLUDE") or None,
         help="Path to an include file containing a YAML of key value pairs to include in changed files. I.e., return the current directory if an important file is changed.",
     )
     parser.add_argument(
@@ -381,31 +404,36 @@ def parse_args() -> argparse.Namespace:
         "--log-level",
         choices=["DEBUG", "INFO", "WARNING", "ERROR"],
         type=str,
-        default="INFO",
+        default=os.getenv("INPUT_LOG_LEVEL") or "INFO",
         help="Logging level",
     )
     parser.add_argument(
         "-t",
         "--types",
         type=str,
-        default="function,process,workflow,pipeline",
+        default=os.getenv("INPUT_TYPES") or "function,process,workflow,pipeline",
         help="Types of tests to include.",
     )
     parser.add_argument(
         "-n",
         "--n_parents",
         type=int,
-        default=0,
+        default=int(os.getenv("INPUT_N_PARENTS") or "0"),
         help="Number of parents to up to return. 0 for file, 1 for immediate dir, 2 for parent dir, etc.",
     )
     parser.add_argument(
         "-T",
         "--tags",
         type=str,
-        default="",
+        default=os.getenv("INPUT_TAGS", ""),
         help="Tags to include.",
     )
-    parser.add_argument("--exclude_tags", type=str, default="", help="Tags to exclude.")
+    parser.add_argument(
+        "--exclude_tags",
+        type=str,
+        default=os.getenv("INPUT_EXCLUDE_TAGS", ""),
+        help="Tags to exclude.",
+    )
     return parser.parse_args()
 
 

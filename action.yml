@@ -46,17 +46,30 @@ inputs:
 outputs:
   components:
     description: 'List of Nextflow components that require testing based on the branch differences.'
+    value: ${{ steps.detect.outputs.components }}
 runs:
-  using: 'docker'
-  image: 'Dockerfile'
-  env:
-    ROOT: ${{ inputs.root }}
-    HEAD: ${{ inputs.head }}
-    BASE: ${{ inputs.base }}
-    IGNORED: ${{ inputs.ignored }}
-    INCLUDE: ${{ inputs.include }}
-    LOG_LEVEL: ${{ inputs.log_level }}
-    TYPES: ${{ inputs.types }}
-    N_PARENTS: ${{ inputs.n_parents }}
-    TAGS: ${{ inputs.tags }}
-    EXCLUDE_TAGS: ${{ inputs.exclude_tags }}
+  using: 'composite'
+  steps:
+    - name: Set up uv
+      uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
+      with:
+        version: '0.12.10'
+        python-version: '3.12'
+        working-directory: ${{ github.action_path }}
+        enable-cache: true
+
+    - name: Detect nf-test changes
+      id: detect
+      shell: bash
+      run: uv run --frozen --script "$GITHUB_ACTION_PATH/detect_nf_test_changes.py"
+      env:
+        INPUT_ROOT: ${{ inputs.root }}
+        INPUT_HEAD: ${{ inputs.head }}
+        INPUT_BASE: ${{ inputs.base }}
+        INPUT_IGNORED: ${{ inputs.ignored }}
+        INPUT_INCLUDE: ${{ inputs.include }}
+        INPUT_LOG_LEVEL: ${{ inputs.log_level }}
+        INPUT_TYPES: ${{ inputs.types }}
+        INPUT_N_PARENTS: ${{ inputs.n_parents }}
+        INPUT_TAGS: ${{ inputs.tags }}
+        INPUT_EXCLUDE_TAGS: ${{ inputs.exclude_tags }}
